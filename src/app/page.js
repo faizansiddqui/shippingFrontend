@@ -1,18 +1,23 @@
-import Image from 'next/image'
 import React from 'react'
+import Enquery from './components/Enquery'
+import Ship from './components/Ship'
+import TrustedBy from './components/TrsutedBy'
+import HeroSection from './components/Hero'
+import AnalyticsSection from './components/AnalyticsSection'
+import WhyChoose from './components/WhyChoose'
 
-const page = () => {
+const Page = () => {
   return (
-    <div className='min-w-screen min-h-screen'>
-      <Image 
-        src={"/LogisticCourier.png"}
-        className='min-w-screen min-h-screen'
-        alt='logistic'
-        width={100}
-        height={100}
-      />
-    </div>
+    <>
+    <HeroSection />
+    <TrustedBy />
+    <AnalyticsSection />
+    <WhyChoose />
+    <Ship />
+    <Enquery />
+    </>
+
   )
 }
 
-export default page
+export default Page
