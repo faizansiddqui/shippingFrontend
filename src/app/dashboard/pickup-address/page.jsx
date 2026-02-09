@@ -234,6 +234,7 @@ export default function PickupAddress() {
               <input name="city" value={formData.city} onChange={handleChange} className="w-full rounded-xl border p-3" placeholder="e.g Mumbai" required />
             </div>
 
+
             <div>
               <label className="block text-sm font-medium mb-1">Pincode *</label>
               <input name="pincode" value={formData.pincode} onChange={handleChange} maxLength={6} className="w-full rounded-xl border p-3" placeholder="e.g 400001" required />
