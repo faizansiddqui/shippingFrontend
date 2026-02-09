@@ -91,7 +91,9 @@ const OrdersPage = () => {
       maxWidth: '100%', 
       margin: '0 auto', 
       width: '100%',
-      boxSizing: 'border-box'
+      boxSizing: 'border-box',
+      color: 'black',
+      backgroundColor: '#ffffff',
     }}>
       <h1 style={{ 
         textAlign: 'center', 

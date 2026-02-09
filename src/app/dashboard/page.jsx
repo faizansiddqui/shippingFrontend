@@ -121,7 +121,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6 p-4 sm:p-6 lg:p-8">
+    <div className="space-y-6 p-4 text-black sm:p-6 lg:p-8">
       {/* Stats Grid - Responsive: 1 col mobile, 2 tablet, 4 desktop */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {stats.map((stat) => {

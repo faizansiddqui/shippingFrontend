@@ -100,7 +100,7 @@ const Signup = () => {
                                     onChange={(e) => setEmail(e.target.value)}
                                     value={email}
                                     disabled={submitting}
-                                    className="pl-10 pr-3 py-3 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 disabled:opacity-50"
+                                    className="pl-10 pr-3 py-3 w-full text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 disabled:opacity-50"
                                 />
                             </div>
                         </div>
@@ -120,7 +120,7 @@ const Signup = () => {
                                     onChange={(e) => setPassword(e.target.value)}
                                     value={password}
                                     disabled={submitting}
-                                    className="pl-10 pr-10 py-3 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 disabled:opacity-50"
+                                    className="pl-10 pr-10 py-3 w-full text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 disabled:opacity-50"
                                 />
                                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                                     <button
@@ -154,7 +154,7 @@ const Signup = () => {
                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                     value={confirmPassword}
                                     disabled={submitting}
-                                    className="pl-10 pr-10 py-3 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 disabled:opacity-50"
+                                    className="pl-10 pr-10 py-3 w-full text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 disabled:opacity-50"
                                 />
                                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                                     <button

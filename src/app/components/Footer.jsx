@@ -111,7 +111,7 @@ const Footer = () => {
       {/* Bottom Section */}
       <div className="max-w-7xl mx-auto mt-12 pt-6 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-center text-gray-500 text-sm space-y-4 sm:space-y-0">
         <p>© 2025 MS Logistic All rights reserved.</p>
-        <p>Developed By Akamify</p>
+        <p>Developed By <b>Akamify</b></p>
       </div>
     </footer>
   );

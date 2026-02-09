@@ -66,7 +66,7 @@ export default function Sidebar({ isOpen, onClose }) {
                 alt="MS-Logistic Logo"
                 width={40}
                 height={40}
-                className="rounded-lg shadow-md"
+                className="rounded-full shadow-md"
               />
               <span className="hidden text-xl font-bold text-gray-800 sm:block">
                 MS-Logistic

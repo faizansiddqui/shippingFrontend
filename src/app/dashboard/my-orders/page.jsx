@@ -1,7 +1,18 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Search, Download, Eye, X, Package, Calendar, User, Phone, MapPin, RefreshCw } from "lucide-react";
+import {
+  Search,
+  Download,
+  Eye,
+  X,
+  Package,
+  Calendar,
+  User,
+  Phone,
+  MapPin,
+  RefreshCw,
+} from "lucide-react";
 import { useAuth } from "../../../utils/checkAuth"; // Adjust path as needed
 
 const OnlyMyOrder = () => {
@@ -20,6 +31,12 @@ const OnlyMyOrder = () => {
   const [error, setError] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [shippingModalOrder, setShippingModalOrder] = useState(null);
+  const [shippingOptions, setShippingOptions] = useState([]);
+  const [shippingLoading, setShippingLoading] = useState(false);
+  const [shippingError, setShippingError] = useState(null);
+  const [shippingPaymentMethod, setShippingPaymentMethod] = useState("");
+  const [selectedShippingOption, setSelectedShippingOption] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const itemsPerPage = 20; // Adjust as needed for performance
@@ -27,7 +44,14 @@ const OnlyMyOrder = () => {
   const loadMoreRef = useRef(null);
 
   // Valid statuses matching backend
-  const validStatuses = ['PENDING', 'ACCEPTED', 'REJECTED', 'ON_WAY', 'RTO', 'DELIVERED'];
+  const validStatuses = [
+    "PENDING",
+    "ACCEPTED",
+    "REJECTED",
+    "ON_WAY",
+    "RTO",
+    "DELIVERED",
+  ];
 
   // Fetch orders
   const fetchOrders = async (append = false) => {
@@ -35,18 +59,18 @@ const OnlyMyOrder = () => {
     setLoading(!append);
     setError(null);
     try {
-      const res = await fetch('http://localhost:5000/user-orders', {
-        method: 'GET',
-        credentials: 'include',
+      const res = await fetch("http://localhost:5000/user-orders", {
+        method: "GET",
+        credentials: "include",
       });
       const data = await res.json();
-      console.log('Fetched user orders:', data);
+      console.log("Fetched user orders:", data);
 
       if (res.ok && data.status) {
         const newOrders = data.data || [];
         if (append) {
-          setOrders(prev => [...prev, ...newOrders]);
-          setFilteredOrders(prev => [...prev, ...newOrders]);
+          setOrders((prev) => [...prev, ...newOrders]);
+          setFilteredOrders((prev) => [...prev, ...newOrders]);
         } else {
           setOrders(newOrders);
           setFilteredOrders(newOrders);
@@ -77,7 +101,12 @@ const OnlyMyOrder = () => {
     setFilteredOrders([]);
     setHasMore(true);
     fetchOrders();
-  },[filters]);
+  }, [filters]);
+
+  const getDisplayPaymentMethod = (order) => {
+    if (!order?.selectedCourierName) return "PENDING";
+    return order.paymentMethod || "PENDING";
+  };
 
   // Filter orders based on user input
   useEffect(() => {
@@ -85,21 +114,33 @@ const OnlyMyOrder = () => {
     if (filters.search) {
       filtered = filtered.filter(
         (o) =>
-          o.orderId.toString().toLowerCase().includes(filters.search.toLowerCase()) ||
-          o.orderItems?.[0]?.itemName?.toLowerCase().includes(filters.search.toLowerCase())
+          o.orderId
+            .toString()
+            .toLowerCase()
+            .includes(filters.search.toLowerCase()) ||
+          o.orderItems?.[0]?.itemName
+            ?.toLowerCase()
+            .includes(filters.search.toLowerCase()),
       );
     }
     if (filters.dateFrom) {
-      filtered = filtered.filter((o) => new Date(o.orderDate) >= new Date(filters.dateFrom));
+      filtered = filtered.filter(
+        (o) => new Date(o.orderDate) >= new Date(filters.dateFrom),
+      );
     }
     if (filters.dateTo) {
-      filtered = filtered.filter((o) => new Date(o.orderDate) <= new Date(filters.dateTo));
+      filtered = filtered.filter(
+        (o) => new Date(o.orderDate) <= new Date(filters.dateTo),
+      );
     }
     if (filters.status) {
       filtered = filtered.filter((o) => o.status === filters.status);
     }
     if (filters.paymentMethod) {
-      filtered = filtered.filter((o) => o.paymentMethod === filters.paymentMethod);
+      filtered = filtered.filter(
+        (o) =>
+          o.selectedCourierName && o.paymentMethod === filters.paymentMethod,
+      );
     }
     setFilteredOrders(filtered);
   }, [filters, orders]);
@@ -109,18 +150,21 @@ const OnlyMyOrder = () => {
   };
 
   // Infinite scroll logic
-  const lastOrderElementRef = useCallback(node => {
-    if (loadingMore) return;
-    if (observer.current) observer.current.disconnect();
-    observer.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMore) {
-        setLoadingMore(true);
-        setCurrentPage(prev => prev + 1);
-        fetchOrders(true);
-      }
-    });
-    if (node) observer.current.observe(node);
-  }, [loadingMore, hasMore]);
+  const lastOrderElementRef = useCallback(
+    (node) => {
+      if (loadingMore) return;
+      if (observer.current) observer.current.disconnect();
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMore) {
+          setLoadingMore(true);
+          setCurrentPage((prev) => prev + 1);
+          fetchOrders(true);
+        }
+      });
+      if (node) observer.current.observe(node);
+    },
+    [loadingMore, hasMore],
+  );
 
   // Load more on page change (but since backend doesn't support pagination, this is simulated by appending all, but for large data, backend should be updated)
   useEffect(() => {
@@ -142,7 +186,7 @@ const OnlyMyOrder = () => {
     if (showLoadMore && !loadingMore) {
       setLoadingMore(true);
       setTimeout(() => {
-        setCurrentPage(prev => prev + 1);
+        setCurrentPage((prev) => prev + 1);
         setLoadingMore(false);
       }, 500); // Simulate delay
     }
@@ -151,7 +195,11 @@ const OnlyMyOrder = () => {
   const handleScroll = useCallback(() => {
     if (loadMoreRef.current) {
       const { scrollTop, scrollHeight, clientHeight } = loadMoreRef.current;
-      if (scrollTop + clientHeight >= scrollHeight - 5 && showLoadMore && !loadingMore) {
+      if (
+        scrollTop + clientHeight >= scrollHeight - 5 &&
+        showLoadMore &&
+        !loadingMore
+      ) {
         loadMore();
       }
     }
@@ -160,8 +208,8 @@ const OnlyMyOrder = () => {
   useEffect(() => {
     const container = loadMoreRef.current;
     if (container) {
-      container.addEventListener('scroll', handleScroll);
-      return () => container.removeEventListener('scroll', handleScroll);
+      container.addEventListener("scroll", handleScroll);
+      return () => container.removeEventListener("scroll", handleScroll);
     }
   }, [handleScroll]);
 
@@ -172,14 +220,14 @@ const OnlyMyOrder = () => {
         (o) =>
           `${o.orderId},${new Date(o.orderDate).toLocaleDateString()},${o.totalOrderValue},${
             o.paymentMethod
-          },${o.status}`
+          },${o.status}`,
       ),
-    ].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
+    ].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = 'my-orders.csv';
+    a.download = "my-orders.csv";
     a.click();
     window.URL.revokeObjectURL(url);
   };
@@ -189,34 +237,195 @@ const OnlyMyOrder = () => {
     setShowModal(true);
   };
 
+  const calculateOrderValue = (order) => {
+    const items = order.orderItems || [];
+    const itemsTotal = items.reduce(
+      (sum, it) => sum + Number(it.units || 0) * Number(it.unitPrice || 0),
+      0,
+    );
+    const taxTotal = items.reduce((sum, it) => {
+      const lineTotal = Number(it.units || 0) * Number(it.unitPrice || 0);
+      return sum + (Number(it.tax || 0) / 100) * lineTotal;
+    }, 0);
+    const total = itemsTotal + taxTotal;
+    return total > 0 ? total : Number(order.totalOrderValue || 0);
+  };
+
+  const fetchShippingOptions = async (order) => {
+    if (!order?.pickupAddressName) {
+      throw new Error("Pickup address is missing for this order");
+    }
+    if (!order?.shippingAddress?.pinCode) {
+      throw new Error("Delivery pincode is missing for this order");
+    }
+    const weight = Number(order?.packageDetails?.packageWeight || 0);
+    if (!weight || weight <= 0) {
+      throw new Error("Package weight is missing for this order");
+    }
+
+    const pickupRes = await fetch(
+      `http://localhost:5000/fetchPickupLocationPicode?addressName=${encodeURIComponent(order.pickupAddressName)}`,
+      { method: "GET", credentials: "include" },
+    );
+    const pickupData = await pickupRes.json();
+    if (!pickupRes.ok || !pickupData?.status) {
+      throw new Error(pickupData?.message || "Failed to fetch pickup pincode");
+    }
+
+    const orderValue = calculateOrderValue(order);
+    const rateRes = await fetch("http://localhost:5000/order", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        Pickup_pincode: pickupData.data?.pincode,
+        Delivery_pincode: String(order.shippingAddress.pinCode),
+        cod: false,
+        total_order_value: Math.round(orderValue),
+        weight,
+      }),
+    });
+
+    const rateData = await rateRes.json();
+    if (!rateRes.ok) {
+      throw new Error(rateData?.error || "Shipping calculation failed");
+    }
+
+    return rateData;
+  };
+
+  const openShippingModal = async (order) => {
+    if (order.status !== "ACCEPTED") {
+      return;
+    }
+    setShippingModalOrder(order);
+    setShippingOptions([]);
+    setShippingError(null);
+    setShippingPaymentMethod("");
+    setSelectedShippingOption(null);
+    setShippingLoading(true);
+    try {
+      const options = await fetchShippingOptions(order);
+      setShippingOptions(options || []);
+    } catch (err) {
+      setShippingError(err.message || "Failed to fetch shipping options");
+    } finally {
+      setShippingLoading(false);
+    }
+  };
+
+  const closeShippingModal = () => {
+    setShippingModalOrder(null);
+    setShippingOptions([]);
+    setShippingError(null);
+    setShippingPaymentMethod("");
+    setSelectedShippingOption(null);
+  };
+
+  const handlePickCourier = (item) => {
+    setSelectedShippingOption(item);
+    setShippingError(null);
+  };
+
+  const handleScheduleOrder = async (order) => {
+    if (!selectedShippingOption) {
+      setShippingError("Please select courier service first");
+      return;
+    }
+    if (!shippingPaymentMethod) {
+      setShippingError("Please select payment method");
+      return;
+    }
+    setShippingLoading(true);
+    setShippingError(null);
+    try {
+      const res = await fetch(
+        `http://localhost:5000/orders/${order.orderId}/update-shipping`,
+        {
+          method: "PATCH",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            selectShippingCharges: Number(
+              selectedShippingOption.total_Price_GST_Included,
+            ),
+            selectedCourierName: selectedShippingOption.courier_name,
+            selectedFreightMode: selectedShippingOption.freight_mode,
+            paymentMethod: shippingPaymentMethod,
+          }),
+        },
+      );
+
+      const data = await res.json();
+      if (!res.ok || !data?.status) {
+        throw new Error(data?.message || "Failed to save delivery service");
+      }
+
+      const updated = {
+        selectShippingCharges: Number(
+          selectedShippingOption.total_Price_GST_Included,
+        ),
+        selectedCourierName: selectedShippingOption.courier_name,
+        selectedFreightMode: selectedShippingOption.freight_mode,
+        paymentMethod: shippingPaymentMethod,
+      };
+
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.orderId === order.orderId ? { ...o, ...updated } : o,
+        ),
+      );
+      setFilteredOrders((prev) =>
+        prev.map((o) =>
+          o.orderId === order.orderId ? { ...o, ...updated } : o,
+        ),
+      );
+      setSelectedOrder((prev) =>
+        prev?.orderId === order.orderId ? { ...prev, ...updated } : prev,
+      );
+
+      closeShippingModal();
+    } catch (err) {
+      setShippingError(err.message || "Failed to save delivery service");
+    } finally {
+      setShippingLoading(false);
+    }
+  };
+
   const handleCancelOrder = async (orderId) => {
     if (confirm(`Are you sure you want to cancel order ${orderId}?`)) {
       try {
         // Update status to REJECTED (assuming cancellation maps to REJECTED)
-        const res = await fetch(`http://localhost:5000/orders/${orderId}/update-status`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
+        const res = await fetch(
+          `http://localhost:5000/orders/${orderId}/update-status`,
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ status: "REJECTED" }),
+            credentials: "include",
           },
-          body: JSON.stringify({ status: 'REJECTED' }),
-          credentials: 'include',
-        });
+        );
 
         if (res.ok) {
           // Update local state
           setOrders((prev) =>
-            prev.map((o) => (o.orderId === orderId ? { ...o, status: 'REJECTED' } : o))
+            prev.map((o) =>
+              o.orderId === orderId ? { ...o, status: "REJECTED" } : o,
+            ),
           );
           setFilteredOrders((prev) =>
-            prev.map((o) => (o.orderId === orderId ? { ...o, status: 'REJECTED' } : o))
+            prev.map((o) =>
+              o.orderId === orderId ? { ...o, status: "REJECTED" } : o,
+            ),
           );
-          alert('Order cancelled successfully');
+          alert("Order cancelled successfully");
         } else {
           const errData = await res.json();
-          alert(`Failed to cancel: ${errData.message || 'Unknown error'}`);
+          alert(`Failed to cancel: ${errData.message || "Unknown error"}`);
         }
       } catch (err) {
-        alert('Network error cancelling order');
+        alert("Network error cancelling order");
       }
     }
   };
@@ -235,18 +444,22 @@ const OnlyMyOrder = () => {
   }
 
   if (!user) {
-    return <div className="text-center">Please log in to view your orders.</div>;
+    return (
+      <div className="text-center">Please log in to view your orders.</div>
+    );
   }
-  
+
   return (
-    <div className="max-w-7xl mx-auto p-6">
-      <motion.div 
-        initial={{ opacity: 0 }} 
-        animate={{ opacity: 1 }} 
-        className="bg-white rounded-2xl shadow p-6"
+    <div className="max-w-7xl text-black mx-auto p-6">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className=""
       >
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-semibold">My Orders ({filteredOrders.length})</h2>
+          <h2 className="text-2xl font-semibold">
+            My Orders ({filteredOrders.length})
+          </h2>
           <div className="flex gap-2">
             <button
               onClick={() => {
@@ -281,12 +494,15 @@ const OnlyMyOrder = () => {
           <div>
             <label className="block text-sm font-medium mb-1">Search</label>
             <div className="relative">
-              <Search size={16} className="absolute left-3 top-3 text-gray-400" />
+              <Search
+                size={16}
+                className="absolute left-3 top-3 text-gray-400"
+              />
               <input
                 type="text"
                 placeholder="Order ID / Item"
                 value={filters.search}
-                onChange={(e) => handleFilterChange('search', e.target.value)}
+                onChange={(e) => handleFilterChange("search", e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
               />
             </div>
@@ -296,7 +512,7 @@ const OnlyMyOrder = () => {
             <input
               type="date"
               value={filters.dateFrom}
-              onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
+              onChange={(e) => handleFilterChange("dateFrom", e.target.value)}
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
             />
           </div>
@@ -305,7 +521,7 @@ const OnlyMyOrder = () => {
             <input
               type="date"
               value={filters.dateTo}
-              onChange={(e) => handleFilterChange('dateTo', e.target.value)}
+              onChange={(e) => handleFilterChange("dateTo", e.target.value)}
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
             />
           </div>
@@ -313,7 +529,7 @@ const OnlyMyOrder = () => {
             <label className="block text-sm font-medium mb-1">Status</label>
             <select
               value={filters.status}
-              onChange={(e) => handleFilterChange('status', e.target.value)}
+              onChange={(e) => handleFilterChange("status", e.target.value)}
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
             >
               <option value="">All</option>
@@ -328,7 +544,9 @@ const OnlyMyOrder = () => {
             <label className="block text-sm font-medium mb-1">Payment</label>
             <select
               value={filters.paymentMethod}
-              onChange={(e) => handleFilterChange('paymentMethod', e.target.value)}
+              onChange={(e) =>
+                handleFilterChange("paymentMethod", e.target.value)
+              }
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
             >
               <option value="">All</option>
@@ -339,19 +557,40 @@ const OnlyMyOrder = () => {
         </div>
 
         {/* Orders Table with Infinite Scroll */}
-        <div ref={loadMoreRef} className="overflow-x-auto max-h-[70vh] overflow-y-auto">
+        <div
+          ref={loadMoreRef}
+          className="overflow-x-auto max-h-[70vh] overflow-y-auto"
+        >
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-gray-100 sticky top-0">
-                <th className="border p-3 text-left text-sm font-medium">Order ID</th>
-                <th className="border p-3 text-left text-sm font-medium">Date</th>
-                <th className="border p-3 text-left text-sm font-medium">Item</th>
-                <th className="border p-3 text-right text-sm font-medium">Total (₹)</th>
-                <th className="border p-3 text-left text-sm font-medium">Payment</th>
-                <th className="border p-3 text-left text-sm font-medium">Charge (₹)</th>
-                <th className="border p-3 text-left text-sm font-medium">Status</th>
-                <th className="border p-3 text-left text-sm font-medium">Courier</th>
-                <th className="border p-3 text-left text-sm font-medium">Actions</th>
+                <th className="border p-3 text-left text-sm font-medium">
+                  Order ID
+                </th>
+                <th className="border p-3 text-left text-sm font-medium">
+                  Date
+                </th>
+                <th className="border p-3 text-left text-sm font-medium">
+                  Item
+                </th>
+                <th className="border p-3 text-right text-sm font-medium">
+                  Total (₹)
+                </th>
+                <th className="border p-3 text-left text-sm font-medium">
+                  Payment
+                </th>
+                <th className="border p-3 text-left text-sm font-medium">
+                  Charge (₹)
+                </th>
+                <th className="border p-3 text-left text-sm font-medium">
+                  Status
+                </th>
+                <th className="border p-3 text-left text-sm font-medium">
+                  Courier
+                </th>
+                <th className="border p-3 text-left text-sm font-medium">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -369,57 +608,73 @@ const OnlyMyOrder = () => {
                 </tr>
               ) : (
                 paginatedOrders.map((order, index) => (
-                  <tr 
-                    key={order.orderId} 
-                    ref={index === paginatedOrders.length - 1 ? lastOrderElementRef : null}
+                  <tr
+                    key={order.orderId}
+                    ref={
+                      index === paginatedOrders.length - 1
+                        ? lastOrderElementRef
+                        : null
+                    }
                     className="border-b hover:bg-gray-50"
                   >
                     <td className="p-3 text-sm font-medium">{order.orderId}</td>
-                    <td className="p-3 text-sm">{new Date(order.orderDate).toLocaleDateString()}</td>
-                    <td className="p-3 text-sm">{order.orderItems?.[0]?.itemName || '—'}</td>
-                    <td className="p-3 text-right text-sm">₹{Number(order.totalOrderValue).toFixed(2)}</td>
+                    <td className="p-3 text-sm">
+                      {new Date(order.orderDate).toLocaleDateString()}
+                    </td>
+                    <td className="p-3 text-sm">
+                      {order.orderItems?.[0]?.itemName || "—"}
+                    </td>
+                    <td className="p-3 text-right text-sm">
+                      ₹{Number(order.totalOrderValue).toFixed(2)}
+                    </td>
                     <td className="p-3">
                       <span
                         className={`px-2 py-1 rounded-full text-xs ${
-                          order.paymentMethod === 'PREPAID'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-orange-100 text-orange-800'
+                          getDisplayPaymentMethod(order) === "PREPAID"
+                            ? "bg-blue-100 text-blue-800"
+                            : getDisplayPaymentMethod(order) === "COD"
+                              ? "bg-orange-100 text-orange-800"
+                              : "bg-gray-100 text-gray-800"
                         }`}
                       >
-                        {order.paymentMethod}
+                        {getDisplayPaymentMethod(order)}
                       </span>
                     </td>
-                    <td className="p-3 text-center text-sm">₹{Number(order.selectShippingCharges).toFixed(2)}</td>
+                    <td className="p-3 text-center text-sm">
+                      ₹{Number(order.selectShippingCharges).toFixed(2)}
+                    </td>
                     <td className="p-3">
                       <span
                         className={`px-2 py-1 rounded-full text-xs ${
-                          order.status === 'DELIVERED'
-                            ? 'bg-green-100 text-green-800'
-                            : order.status === 'ON_WAY'
-                            ? 'bg-blue-100 text-blue-800'
-                            : order.status === 'ACCEPTED'
-                            ? 'bg-purple-100 text-purple-800'
-                            : order.status === 'REJECTED'
-                            ? 'bg-red-100 text-red-800'
-                            : order.status === 'RTO'
-                            ? 'bg-orange-100 text-orange-800'
-                            : 'bg-yellow-100 text-yellow-800'
+                          order.status === "DELIVERED"
+                            ? "bg-green-100 text-green-800"
+                            : order.status === "ON_WAY"
+                              ? "bg-blue-100 text-blue-800"
+                              : order.status === "ACCEPTED"
+                                ? "bg-purple-100 text-purple-800"
+                                : order.status === "REJECTED"
+                                  ? "bg-red-100 text-red-800"
+                                  : order.status === "RTO"
+                                    ? "bg-orange-100 text-orange-800"
+                                    : "bg-yellow-100 text-yellow-800"
                         }`}
                       >
                         {order.status}
                       </span>
                     </td>
-                    <td className="p-3 text-sm">{order.selectedCourierName || '—'}</td>
+                    <td className="p-3 text-sm">
+                      {order.selectedCourierName || "—"}
+                    </td>
                     <td className="p-3 text-sm">
                       <div className="flex gap-2">
-                        <button
+                        {/* <button
                           onClick={() => handleCancelOrder(order.orderId)}
                           className="text-red-500 hover:text-red-700 p-1"
                           title="Cancel Order"
                           disabled={order.status !== 'PENDING'}
                         >
                           <X size={16} />
-                        </button>
+                        </button> */}
                         <button
                           onClick={() => handleViewDetails(order)}
                           className="text-blue-500 hover:text-blue-700 p-1"
@@ -427,6 +682,17 @@ const OnlyMyOrder = () => {
                         >
                           <Eye size={16} />
                         </button>
+                        {order.status === "ACCEPTED" &&
+                          !order.selectedCourierName && (
+                            <button
+                              onClick={() => openShippingModal(order)}
+                              className="flex items-center gap-1 text-emerald-600 hover:text-emerald-800 text-xs font-medium"
+                              title="Schedule Order"
+                            >
+                              <Calendar size={14} />
+                              Schedule
+                            </button>
+                          )}
                       </div>
                     </td>
                   </tr>
@@ -442,11 +708,11 @@ const OnlyMyOrder = () => {
             </tbody>
           </table>
         </div>
-        {!loading && filteredOrders.length > 0 && !loadingMore && paginatedOrders.length >= filteredOrders.length && (
+        {/* {!loading && filteredOrders.length > 0 && !loadingMore && paginatedOrders.length >= filteredOrders.length && (
           <div className="text-center py-4 text-gray-500">
             All orders loaded
           </div>
-        )}
+        )} */}
       </motion.div>
 
       {/* Modal for Full Details */}
@@ -465,8 +731,13 @@ const OnlyMyOrder = () => {
           >
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold">Order Details #{selectedOrder.orderId}</h2>
-                <button onClick={closeModal} className="text-gray-500 hover:text-gray-700">
+                <h2 className="text-2xl font-bold">
+                  Order Details #{selectedOrder.orderId}
+                </h2>
+                <button
+                  onClick={closeModal}
+                  className="text-gray-500 hover:text-gray-700"
+                >
                   <X size={24} />
                 </button>
               </div>
@@ -478,11 +749,17 @@ const OnlyMyOrder = () => {
                       <Calendar className="h-4 w-4" />
                       Order Date
                     </p>
-                    <p className="text-lg font-semibold">{new Date(selectedOrder.orderDate).toLocaleDateString()}</p>
+                    <p className="text-lg font-semibold">
+                      {new Date(selectedOrder.orderDate).toLocaleDateString()}
+                    </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-3xl font-bold text-green-600">₹{Number(selectedOrder.totalOrderValue).toFixed(2)}</p>
-                    <p className="text-sm text-gray-500">{selectedOrder.paymentMethod}</p>
+                    <p className="text-3xl font-bold text-green-600">
+                      ₹{Number(selectedOrder.totalOrderValue).toFixed(2)}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {getDisplayPaymentMethod(selectedOrder)}
+                    </p>
                   </div>
                 </div>
 
@@ -490,17 +767,17 @@ const OnlyMyOrder = () => {
                   <h3 className="font-semibold mb-3">Status</h3>
                   <span
                     className={`px-3 py-1 rounded-full text-sm ${
-                      selectedOrder.status === 'DELIVERED'
-                        ? 'bg-green-100 text-green-800'
-                        : selectedOrder.status === 'ON_WAY'
-                        ? 'bg-blue-100 text-blue-800'
-                        : selectedOrder.status === 'ACCEPTED'
-                        ? 'bg-purple-100 text-purple-800'
-                        : selectedOrder.status === 'REJECTED'
-                        ? 'bg-red-100 text-red-800'
-                        : selectedOrder.status === 'RTO'
-                        ? 'bg-orange-100 text-orange-800'
-                        : 'bg-yellow-100 text-yellow-800'
+                      selectedOrder.status === "DELIVERED"
+                        ? "bg-green-100 text-green-800"
+                        : selectedOrder.status === "ON_WAY"
+                          ? "bg-blue-100 text-blue-800"
+                          : selectedOrder.status === "ACCEPTED"
+                            ? "bg-purple-100 text-purple-800"
+                            : selectedOrder.status === "REJECTED"
+                              ? "bg-red-100 text-red-800"
+                              : selectedOrder.status === "RTO"
+                                ? "bg-orange-100 text-orange-800"
+                                : "bg-yellow-100 text-yellow-800"
                     }`}
                   >
                     {selectedOrder.status}
@@ -513,26 +790,27 @@ const OnlyMyOrder = () => {
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4 text-gray-400" />
                       <span>
-                        {selectedOrder.shippingAddress?.firstName || '—'}{' '}
-                        {selectedOrder.shippingAddress?.lastName || ''}
+                        {selectedOrder.shippingAddress?.firstName || "—"}{" "}
+                        {selectedOrder.shippingAddress?.lastName || ""}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Phone className="h-4 w-4 text-gray-400" />
-                      <span>{selectedOrder.shippingAddress?.phone || '—'}</span>
+                      <span>{selectedOrder.shippingAddress?.phone || "—"}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-gray-400" />
                       <span>
-                        {selectedOrder.shippingAddress?.addressLine1 || '—'},{' '}
-                        {selectedOrder.shippingAddress?.addressLine2 || ''}
+                        {selectedOrder.shippingAddress?.addressLine1 || "—"},{" "}
+                        {selectedOrder.shippingAddress?.addressLine2 || ""}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-gray-400" />
                       <span>
-                        {selectedOrder.shippingAddress?.city || '—'}, {selectedOrder.shippingAddress?.state || ''} -{' '}
-                        {selectedOrder.shippingAddress?.pinCode || '—'}
+                        {selectedOrder.shippingAddress?.city || "—"},{" "}
+                        {selectedOrder.shippingAddress?.state || ""} -{" "}
+                        {selectedOrder.shippingAddress?.pinCode || "—"}
                       </span>
                     </div>
                   </div>
@@ -542,21 +820,30 @@ const OnlyMyOrder = () => {
                   <h3 className="font-semibold mb-3">Pickup Address</h3>
                   <div className="flex items-center gap-2 text-sm">
                     <MapPin className="h-4 w-4 text-gray-400" />
-                    <span>{selectedOrder.pickupAddressName || '—'}</span>
+                    <span>{selectedOrder.pickupAddressName || "—"}</span>
                   </div>
                 </div>
-
-                {selectedOrder.selectedCourierName && (
+                {selectedOrder.selectedCourierName ? (
                   <div>
                     <h3 className="font-semibold mb-3">Courier Details</h3>
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Package className="h-4 w-4" />
-                      Shipped via: {selectedOrder.selectedCourierName} 
-                      ₹{selectedOrder.selectShippingCharges} (
+                      Shipped via: {selectedOrder.selectedCourierName}₹
+                      {selectedOrder.selectShippingCharges} (
                       {selectedOrder.selectedFreightMode})
                     </div>
                   </div>
-                )}
+                ) : selectedOrder.status === "ACCEPTED" ? (
+                  <div>
+                    <h3 className="font-semibold mb-3">Courier Details</h3>
+                    <button
+                      onClick={() => openShippingModal(selectedOrder)}
+                      className="text-emerald-600 hover:text-emerald-800 underline text-sm"
+                    >
+                      Schedule Order
+                    </button>
+                  </div>
+                ) : null}
 
                 <div>
                   <h3 className="font-semibold mb-3">Order Items</h3>
@@ -565,7 +852,8 @@ const OnlyMyOrder = () => {
                       <div key={idx} className="border rounded-lg p-3">
                         <p className="font-medium">{item.itemName}</p>
                         <p className="text-sm text-gray-500">
-                          Qty: {item.units} × ₹{Number(item.unitPrice).toFixed(2)} = ₹
+                          Qty: {item.units} × ₹
+                          {Number(item.unitPrice).toFixed(2)} = ₹
                           {Number(item.units * item.unitPrice).toFixed(2)}
                         </p>
                       </div>
@@ -578,14 +866,134 @@ const OnlyMyOrder = () => {
                     <h3 className="font-semibold mb-3">Package Details</h3>
                     <div className="p-3 bg-gray-50 rounded-lg text-sm">
                       <p>
-                        Dimensions: {selectedOrder.packageDetails.packageLength}×{selectedOrder.packageDetails.packageBreadth}
-                        ×{selectedOrder.packageDetails.packageHeight} cm
+                        Dimensions: {selectedOrder.packageDetails.packageLength}
+                        ×{selectedOrder.packageDetails.packageBreadth}×
+                        {selectedOrder.packageDetails.packageHeight} cm
                       </p>
-                      <p>Weight: {selectedOrder.packageDetails.packageWeight} kg</p>
+                      <p>
+                        Weight: {selectedOrder.packageDetails.packageWeight} kg
+                      </p>
                     </div>
                   </div>
                 )}
               </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+
+      {shippingModalOrder && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={closeShippingModal}
+        >
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white rounded-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Schedule Order</h2>
+                <button
+                  onClick={closeShippingModal}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X size={22} />
+                </button>
+              </div>
+              <p className="text-sm text-gray-500 mb-4">
+                Order ID: {shippingModalOrder.orderId}
+              </p>
+
+              {shippingError && (
+                <div className="bg-red-50 text-red-700 rounded-xl p-3 mb-4">
+                  {shippingError}
+                </div>
+              )}
+
+              {shippingLoading ? (
+                <div className="text-sm text-gray-500">
+                  Loading courier options...
+                </div>
+              ) : shippingOptions.length === 0 ? (
+                <div className="text-sm text-gray-500">
+                  No courier options available.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {shippingOptions.map((item, idx) => {
+                    const isSelected =
+                      selectedShippingOption &&
+                      selectedShippingOption.courier_name ===
+                        item.courier_name &&
+                      selectedShippingOption.freight_mode === item.freight_mode;
+                    return (
+                      <div
+                        key={idx}
+                        className={`flex items-center justify-between border rounded-xl p-3 ${
+                          isSelected ? "border-emerald-500 bg-emerald-50" : ""
+                        }`}
+                      >
+                        <div>
+                          <div className="text-sm font-semibold">
+                            {item.courier_name}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {item.freight_mode}
+                          </div>
+                        </div>
+                        <div className="text-sm font-medium text-green-600">
+                          ₹{Number(item.total_Price_GST_Included).toFixed(2)}
+                        </div>
+                        <button
+                          onClick={() => handlePickCourier(item)}
+                          className={`px-3 py-1 rounded-lg text-xs ${
+                            isSelected
+                              ? "bg-emerald-600 text-white"
+                              : "bg-blue-600 text-white hover:bg-blue-700"
+                          }`}
+                          disabled={shippingLoading}
+                        >
+                          {isSelected ? "Selected" : "Select"}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {selectedShippingOption && (
+                <div className="mt-5">
+                  <div className="text-sm text-gray-600 mb-2">
+                    Selected: {selectedShippingOption.courier_name} (
+                    {selectedShippingOption.freight_mode})
+                  </div>
+                  <label className="block text-sm font-medium mb-1">
+                    Payment Method
+                  </label>
+                  <select
+                    value={shippingPaymentMethod}
+                    onChange={(e) => setShippingPaymentMethod(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  >
+                    <option value="">Select payment</option>
+                    <option value="PREPAID">PREPAID</option>
+                    <option value="COD">COD</option>
+                  </select>
+
+                  <button
+                    onClick={() => handleScheduleOrder(shippingModalOrder)}
+                    className="mt-4 w-full bg-emerald-600 text-white py-2 rounded-lg hover:bg-emerald-700"
+                    disabled={shippingLoading || !shippingPaymentMethod}
+                  >
+                    Schedule Order
+                  </button>
+                </div>
+              )}
             </div>
           </motion.div>
         </motion.div>

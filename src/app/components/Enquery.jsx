@@ -158,10 +158,10 @@ export default function Inquiry() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex justify-center p-4 sm:p-8 pt-20">
+        <div className="min-h-screen text-black bg-gradient-to-br from-purple-50 to-blue-50 flex justify-center p-4 sm:p-8 pt-20">
             <div className="flex flex-col lg:flex-row gap-6 max-w-6xl w-full">
                 {/* Left Form Section */}
-                <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 flex-1 border border-purple-100/50">
+                <div className=" p-6 sm:p-8 flex-1 border border-purple-100/50">
                     <h2 className="text-2xl font-bold text-gray-800 mb-6 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text">
                         Parcel Inquiry
                     </h2>
@@ -312,7 +312,7 @@ export default function Inquiry() {
                 {/* Right Rates Table */}
                 <div
                     ref={ratesRef}
-                    className={`bg-white rounded-2xl shadow-xl p-6 sm:p-8 flex-1 border border-purple-100/50 transition-all duration-500 ${highlightRates ? 'ring-4 ring-purple-400 bg-purple-50/50' : ''}`}
+                    className={`p-6 sm:p-8 flex-1 border border-purple-100/50 transition-all duration-500 ${highlightRates ? 'ring-4 ring-purple-400 bg-purple-50/50' : ''}`}
                 >
                     <h2 className="text-2xl font-bold text-gray-800 mb-6 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text">
                         Shipping Rates

@@ -184,9 +184,9 @@ export default function PickupAddress() {
   if (!user) return null; // Redirect handled by hook
 
   return (
-    <div className="max-w-5xl mx-auto p-6">
+    <div className="max-w-5xl text-black mx-auto p-6">
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="grid lg:grid-cols-3 gap-6">
-        <form onSubmit={handleSubmit} className="lg:col-span-2 bg-white rounded-2xl shadow p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="lg:col-span-2 p-6 space-y-6">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-semibold">Add Pickup Address</h2>
@@ -200,48 +200,48 @@ export default function PickupAddress() {
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">Company / Business Name *</label>
-              <input name="address_name" value={formData.address_name} onChange={handleChange} className="w-full rounded-xl border p-3" required />
+              <input name="address_name" value={formData.address_name} onChange={handleChange} className="w-full rounded-xl border p-3" placeholder="e.g MS Logistics" required />
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">Contact Person *</label>
-              <input name="contact_name" value={formData.contact_name} onChange={handleChange} className="w-full rounded-xl border p-3" required />
+              <input name="contact_name" value={formData.contact_name} onChange={handleChange} className="w-full rounded-xl border p-3" placeholder="e.g Rahul" required />
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">Mobile No. *</label>
-              <input name="contact_number" value={formData.contact_number} onChange={handleChange} maxLength={10} className="w-full rounded-xl border p-3" required />
+              <input name="contact_number" value={formData.contact_number} onChange={handleChange} maxLength={10} className="w-full rounded-xl border p-3" placeholder="e.g 9876543210" required />
               <p className="text-xs text-gray-400 mt-1">Enter 10-digit mobile number without +91</p>
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">Email</label>
-              <input name="email" value={formData.email} onChange={handleChange} className="w-full rounded-xl border p-3" />
+              <input name="email" value={formData.email} onChange={handleChange} className="w-full rounded-xl border p-3" placeholder="e.g example@example.com" />
             </div>
 
             <div className="sm:col-span-2">
               <label className="block text-sm font-medium mb-1">Address Line 1 *</label>
-              <input name="address_line" value={formData.address_line} onChange={handleChange} className="w-full rounded-xl border p-3" required />
+              <input name="address_line" value={formData.address_line} onChange={handleChange} className="w-full rounded-xl border p-3" placeholder="e.g 123 Main St" required />
             </div>
 
             <div className="sm:col-span-2">
               <label className="block text-sm font-medium mb-1">Address Line 2</label>
-              <input name="address_line2" value={formData.address_line2} onChange={handleChange} className="w-full rounded-xl border p-3" />
+              <input name="address_line2" value={formData.address_line2} onChange={handleChange} className="w-full rounded-xl border p-3" placeholder="e.g Apt 4B" />
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">City *</label>
-              <input name="city" value={formData.city} onChange={handleChange} className="w-full rounded-xl border p-3" required />
+              <input name="city" value={formData.city} onChange={handleChange} className="w-full rounded-xl border p-3" placeholder="e.g Mumbai" required />
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">Pincode *</label>
-              <input name="pincode" value={formData.pincode} onChange={handleChange} maxLength={6} className="w-full rounded-xl border p-3" required />
+              <input name="pincode" value={formData.pincode} onChange={handleChange} maxLength={6} className="w-full rounded-xl border p-3" placeholder="e.g 400001" required />
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">GSTIN (optional)</label>
-              <input name="gstin" value={formData.gstin} onChange={handleChange} className="w-full rounded-xl border p-3" />
+              <input name="gstin" value={formData.gstin} onChange={handleChange} className="w-full rounded-xl border p-3" placeholder="e.g 27AAECS1234F1Z5" />
             </div>
 
             <div className="flex items-center gap-4">
@@ -309,7 +309,7 @@ export default function PickupAddress() {
         </form>
 
         {/* Right column preview */}
-        <aside className="bg-white rounded-2xl shadow p-4">
+        <aside className="bg-slate-50 p-4">
           <h3 className="text-lg font-semibold mb-3">Preview</h3>
           <div className="space-y-3 text-sm">
             <div className="flex items-start gap-3">
