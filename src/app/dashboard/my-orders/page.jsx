@@ -14,9 +14,11 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useAuth } from "../../../utils/checkAuth"; // Adjust path as needed
+import { useWallet } from "@/context/WalletContext";
 
 const OnlyMyOrder = () => {
   const { user, loading: authLoading } = useAuth();
+  const { walletBalance, setWalletBalance } = useWallet();
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [filters, setFilters] = useState({
@@ -37,6 +39,11 @@ const OnlyMyOrder = () => {
   const [shippingError, setShippingError] = useState(null);
   const [shippingPaymentMethod, setShippingPaymentMethod] = useState("");
   const [selectedShippingOption, setSelectedShippingOption] = useState(null);
+  const [selectedOrderIds, setSelectedOrderIds] = useState(new Set());
+  const [labelLoading, setLabelLoading] = useState({});
+  const [bulkStatusLoading, setBulkStatusLoading] = useState(false);
+  const [bulkScheduleLoading, setBulkScheduleLoading] = useState(false);
+  const [bulkScheduleIds, setBulkScheduleIds] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const itemsPerPage = 20; // Adjust as needed for performance
@@ -101,12 +108,22 @@ const OnlyMyOrder = () => {
     setFilteredOrders([]);
     setHasMore(true);
     fetchOrders();
+    setSelectedOrderIds(new Set());
   }, [filters]);
 
   const getDisplayPaymentMethod = (order) => {
     if (!order?.selectedCourierName) return "PENDING";
     return order.paymentMethod || "PENDING";
   };
+
+  const getAwbNumber = (order) =>
+    order?.awbNumber ||
+    order?.awb ||
+    order?.awb_number ||
+    order?.airwayBill ||
+    order?.waybill ||
+    order?.waybill_number ||
+    "";
 
   // Filter orders based on user input
   useEffect(() => {
@@ -149,6 +166,136 @@ const OnlyMyOrder = () => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
+  const normalizeOrderId = (orderId) => {
+    if (!orderId) return "";
+    return String(orderId).trim();
+  };
+
+  const getOrderIdForApi = (orderId) => encodeURIComponent(normalizeOrderId(orderId));
+
+  const toggleSelectAllVisible = () => {
+    const allIds = paginatedOrders.map((o) => o.orderId).filter(Boolean);
+    const allSelected = allIds.every((id) => selectedOrderIds.has(id));
+    const next = new Set(selectedOrderIds);
+    if (allSelected) {
+      allIds.forEach((id) => next.delete(id));
+    } else {
+      allIds.forEach((id) => next.add(id));
+    }
+    setSelectedOrderIds(next);
+  };
+
+  const toggleSelectOne = (orderId) => {
+    if (!orderId) return;
+    const next = new Set(selectedOrderIds);
+    if (next.has(orderId)) next.delete(orderId);
+    else next.add(orderId);
+    setSelectedOrderIds(next);
+  };
+
+  const updateOrderStatus = async (orderId, status) => {
+    const normalizedId = normalizeOrderId(orderId);
+    if (!normalizedId) {
+      throw new Error("Order ID missing");
+    }
+    const res = await fetch(
+      `http://localhost:5000/orders/${getOrderIdForApi(normalizedId)}/update-status`,
+      {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ status }),
+      },
+    );
+    const data = await res.json();
+    if (!res.ok || !data?.status) {
+      throw new Error(data?.message || "Failed to update status");
+    }
+    return data;
+  };
+
+  const handleApproveOne = async (orderId) => {
+    try {
+      if (!orderId) throw new Error("Order ID missing");
+      await updateOrderStatus(orderId, "ACCEPTED");
+      setOrders((prev) => prev.map((o) => (o.orderId === orderId ? { ...o, status: "ACCEPTED" } : o)));
+      setFilteredOrders((prev) => prev.map((o) => (o.orderId === orderId ? { ...o, status: "ACCEPTED" } : o)));
+    } catch (err) {
+      alert(err.message || "Failed to approve order");
+    }
+  };
+
+  const handleCancelOne = async (orderId) => {
+    try {
+      if (!orderId) throw new Error("Order ID missing");
+      await updateOrderStatus(orderId, "REJECTED");
+      setOrders((prev) => prev.map((o) => (o.orderId === orderId ? { ...o, status: "REJECTED" } : o)));
+      setFilteredOrders((prev) => prev.map((o) => (o.orderId === orderId ? { ...o, status: "REJECTED" } : o)));
+    } catch (err) {
+      alert(err.message || "Failed to cancel order");
+    }
+  };
+
+  const handleBulkStatus = async (status) => {
+    if (selectedOrderIds.size === 0) return;
+    setBulkStatusLoading(true);
+    const ids = Array.from(selectedOrderIds).filter(Boolean);
+    const eligibleIds = ids.filter((id) => {
+      const order = orders.find((o) => o.orderId === id);
+      return order && order.status === "PENDING" && !order.selectedCourierName;
+    });
+    if (eligibleIds.length === 0) {
+      alert("Only PENDING orders can be approved/cancelled");
+      setBulkStatusLoading(false);
+      return;
+    }
+    const results = await Promise.allSettled(
+      eligibleIds.map((id) => updateOrderStatus(id, status)),
+    );
+    const successIds = results
+      .map((r, i) => (r.status === "fulfilled" ? eligibleIds[i] : null))
+      .filter(Boolean);
+    if (successIds.length > 0) {
+      setOrders((prev) =>
+        prev.map((o) => (successIds.includes(o.orderId) ? { ...o, status } : o)),
+      );
+      setFilteredOrders((prev) =>
+        prev.map((o) => (successIds.includes(o.orderId) ? { ...o, status } : o)),
+      );
+    }
+    const failed = results.filter((r) => r.status === "rejected");
+    if (failed.length > 0) {
+      alert(`${failed.length} orders failed to update`);
+    }
+    setSelectedOrderIds(new Set());
+    setBulkStatusLoading(false);
+  };
+
+  const hasNonPendingSelection = Array.from(selectedOrderIds).some((id) => {
+    const order = orders.find((o) => o.orderId === id);
+    return order && (order.status !== "PENDING" || order.selectedCourierName);
+  });
+
+  const hasScheduledSelection = Array.from(selectedOrderIds).some((id) => {
+    const order = orders.find((o) => o.orderId === id);
+    return order && order.selectedCourierName;
+  });
+
+  const handleBulkSchedule = () => {
+    if (selectedOrderIds.size === 0) return;
+    const ids = Array.from(selectedOrderIds);
+    const ordersToSchedule = orders.filter((o) => ids.includes(o.orderId));
+    const eligible = ordersToSchedule.filter(
+      (o) => o.status === "ACCEPTED" && !o.selectedCourierName,
+    );
+    if (eligible.length === 0) {
+      alert("No eligible orders selected for scheduling");
+      return;
+    }
+    setBulkScheduleIds(eligible.map((o) => o.orderId));
+    openShippingModal(eligible[0]);
+  };
+
   // Infinite scroll logic
   const lastOrderElementRef = useCallback(
     (node) => {
@@ -181,6 +328,13 @@ const OnlyMyOrder = () => {
   const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
   const paginatedOrders = filteredOrders.slice(0, currentPage * itemsPerPage);
   const showLoadMore = paginatedOrders.length < filteredOrders.length;
+  const bulkScheduleCount = bulkScheduleIds.length ? bulkScheduleIds.length : 1;
+  const requiredWalletAmount =
+    shippingPaymentMethod === "PREPAID"
+      ? getRequiredWalletAmount(bulkScheduleCount)
+      : 0;
+  const hasInsufficientBalance =
+    shippingPaymentMethod === "PREPAID" && walletBalance < requiredWalletAmount;
 
   const loadMore = () => {
     if (showLoadMore && !loadingMore) {
@@ -326,6 +480,108 @@ const OnlyMyOrder = () => {
     setShippingError(null);
   };
 
+  function getRequiredWalletAmount(count = 1) {
+    const charge = Number(
+      selectedShippingOption?.total_Price_GST_Included || 0,
+    );
+    return charge * count;
+  }
+
+  const applyWalletBalanceFromResponse = (data) => {
+    const nextBalance =
+      data?.wallet_balance ??
+      data?.walletBalance ??
+      data?.wallet?.balance ??
+      null;
+    if (nextBalance !== null && nextBalance !== undefined) {
+      setWalletBalance(Number(nextBalance) || 0);
+    }
+  };
+
+  const handleGenerateLabel = async (order) => {
+    const orderId = order?.orderId;
+    if (!orderId) return;
+    setLabelLoading((prev) => ({ ...prev, [orderId]: true }));
+    try {
+      const endpoints = [
+        {
+          url: `http://localhost:5000/orders/${getOrderIdForApi(orderId)}/generate-label`,
+          method: "POST",
+        },
+        {
+          url: `http://localhost:5000/orders/${getOrderIdForApi(orderId)}/label`,
+          method: "GET",
+        },
+      ];
+
+      let lastError = null;
+      for (const endpoint of endpoints) {
+        const res = await fetch(endpoint.url, {
+          method: endpoint.method,
+          credentials: "include",
+        });
+
+        const contentType = res.headers.get("content-type") || "";
+        if (!res.ok) {
+          let errMsg = `Failed to generate label (HTTP ${res.status})`;
+          try {
+            const errData = await res.json();
+            errMsg = errData?.message || errData?.error || errMsg;
+          } catch (err) {
+            // ignore JSON parse error
+          }
+          lastError = errMsg;
+          continue;
+        }
+
+        if (contentType.includes("application/pdf")) {
+          const blob = await res.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `label-${orderId}.pdf`;
+          a.click();
+          window.URL.revokeObjectURL(url);
+          return;
+        }
+
+        const data = await res.json().catch(() => null);
+        if (data?.labelUrl) {
+          window.open(data.labelUrl, "_blank");
+          return;
+        }
+        if (data?.pdfBase64) {
+          const byteCharacters = atob(data.pdfBase64);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i += 1) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const blob = new Blob([new Uint8Array(byteNumbers)], {
+            type: "application/pdf",
+          });
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `label-${orderId}.pdf`;
+          a.click();
+          window.URL.revokeObjectURL(url);
+          return;
+        }
+        if (data?.message) {
+          lastError = data.message;
+        } else {
+          lastError = "Failed to generate label";
+        }
+      }
+
+      throw new Error(lastError || "Failed to generate label");
+    } catch (err) {
+      alert(err.message || "Failed to generate label");
+    } finally {
+      setLabelLoading((prev) => ({ ...prev, [orderId]: false }));
+    }
+  };
+
   const handleScheduleOrder = async (order) => {
     if (!selectedShippingOption) {
       setShippingError("Please select courier service first");
@@ -335,32 +591,48 @@ const OnlyMyOrder = () => {
       setShippingError("Please select payment method");
       return;
     }
+    const targetIds = bulkScheduleIds.length
+      ? bulkScheduleIds
+      : [order.orderId];
+    if (shippingPaymentMethod === "PREPAID") {
+      const requiredAmount = getRequiredWalletAmount(targetIds.length);
+      if (walletBalance < requiredAmount) {
+        setShippingError("Insufficient wallet balance");
+        return;
+      }
+    }
     setShippingLoading(true);
     setShippingError(null);
     try {
-      const res = await fetch(
-        `http://localhost:5000/orders/${order.orderId}/update-shipping`,
-        {
-          method: "PATCH",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            selectShippingCharges: Number(
-              selectedShippingOption.total_Price_GST_Included,
-            ),
-            selectedCourierName: selectedShippingOption.courier_name,
-            selectedFreightMode: selectedShippingOption.freight_mode,
-            paymentMethod: shippingPaymentMethod,
+      const results = await Promise.allSettled(
+        targetIds.map((orderId) =>
+          fetch(
+            `http://localhost:5000/orders/${getOrderIdForApi(orderId)}/update-shipping`,
+            {
+            method: "PATCH",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              selectShippingCharges: Number(
+                selectedShippingOption.total_Price_GST_Included,
+              ),
+              selectedCourierName: selectedShippingOption.courier_name,
+              selectedFreightMode: selectedShippingOption.freight_mode,
+              paymentMethod: shippingPaymentMethod,
+            }),
+          },
+          ).then(async (res) => {
+            const data = await res.json();
+            if (!res.ok || !data?.status) {
+              throw new Error(data?.message || "Failed to save delivery service");
+            }
+            applyWalletBalanceFromResponse(data);
+            return data;
           }),
-        },
+        ),
       );
 
-      const data = await res.json();
-      if (!res.ok || !data?.status) {
-        throw new Error(data?.message || "Failed to save delivery service");
-      }
-
-      const updated = {
+      const baseUpdated = {
         selectShippingCharges: Number(
           selectedShippingOption.total_Price_GST_Included,
         ),
@@ -369,21 +641,62 @@ const OnlyMyOrder = () => {
         paymentMethod: shippingPaymentMethod,
       };
 
-      setOrders((prev) =>
-        prev.map((o) =>
-          o.orderId === order.orderId ? { ...o, ...updated } : o,
-        ),
-      );
-      setFilteredOrders((prev) =>
-        prev.map((o) =>
-          o.orderId === order.orderId ? { ...o, ...updated } : o,
-        ),
-      );
-      setSelectedOrder((prev) =>
-        prev?.orderId === order.orderId ? { ...prev, ...updated } : prev,
-      );
+      const successIds = results
+        .map((r, i) => (r.status === "fulfilled" ? targetIds[i] : null))
+        .filter(Boolean);
 
-      closeShippingModal();
+      if (successIds.length > 0) {
+        const perIdUpdates = {};
+        results.forEach((r, idx) => {
+          if (r.status !== "fulfilled") return;
+          const orderId = targetIds[idx];
+          const payload =
+            r.value?.order || r.value?.data || r.value?.updatedOrder || null;
+          const awb =
+            r.value?.awbNumber ||
+            r.value?.awb ||
+            r.value?.awb_number ||
+            payload?.awbNumber ||
+            payload?.awb ||
+            payload?.awb_number ||
+            "";
+          perIdUpdates[orderId] = {
+            ...baseUpdated,
+            ...(payload || {}),
+            ...(awb ? { awbNumber: awb } : {}),
+          };
+        });
+
+        setOrders((prev) =>
+          prev.map((o) =>
+            successIds.includes(o.orderId)
+              ? { ...o, ...perIdUpdates[o.orderId] }
+              : o,
+          ),
+        );
+        setFilteredOrders((prev) =>
+          prev.map((o) =>
+            successIds.includes(o.orderId)
+              ? { ...o, ...perIdUpdates[o.orderId] }
+              : o,
+          ),
+        );
+        setSelectedOrder((prev) =>
+          prev && successIds.includes(prev.orderId)
+            ? { ...prev, ...perIdUpdates[prev.orderId] }
+            : prev,
+        );
+      }
+
+      const failed = results.filter((r) => r.status === "rejected");
+      if (failed.length > 0) {
+        const firstError = failed[0]?.reason?.message;
+        setShippingError(firstError || `${failed.length} orders failed to schedule`);
+      } else {
+        closeShippingModal();
+      }
+      setSelectedOrderIds(new Set());
+      setBulkScheduleIds([]);
     } catch (err) {
       setShippingError(err.message || "Failed to save delivery service");
     } finally {
@@ -456,11 +769,35 @@ const OnlyMyOrder = () => {
         animate={{ opacity: 1 }}
         className=""
       >
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-wrap gap-3 justify-between items-center mb-6">
           <h2 className="text-2xl font-semibold">
             My Orders ({filteredOrders.length})
           </h2>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => handleBulkStatus("ACCEPTED")}
+              className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 disabled:opacity-60"
+              disabled={selectedOrderIds.size === 0 || bulkStatusLoading || hasNonPendingSelection}
+              title="Approve Selected"
+            >
+              Approve Selected
+            </button>
+            <button
+              onClick={() => handleBulkStatus("REJECTED")}
+              className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-60"
+              disabled={selectedOrderIds.size === 0 || bulkStatusLoading || hasNonPendingSelection}
+              title="Cancel Selected (PENDING only)"
+            >
+              Cancel Selected
+            </button>
+            <button
+              onClick={handleBulkSchedule}
+              className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-60"
+              disabled={selectedOrderIds.size === 0 || bulkScheduleLoading || hasScheduledSelection}
+              title="Schedule Selected (unscheduled only)"
+            >
+              Schedule Selected
+            </button>
             <button
               onClick={() => {
                 setCurrentPage(1);
@@ -565,6 +902,16 @@ const OnlyMyOrder = () => {
             <thead>
               <tr className="bg-gray-100 sticky top-0">
                 <th className="border p-3 text-left text-sm font-medium">
+                  <input
+                    type="checkbox"
+                    checked={
+                      paginatedOrders.length > 0 &&
+                      paginatedOrders.every((o) => selectedOrderIds.has(o.orderId))
+                    }
+                    onChange={toggleSelectAllVisible}
+                  />
+                </th>
+                <th className="border p-3 text-left text-sm font-medium">
                   Order ID
                 </th>
                 <th className="border p-3 text-left text-sm font-medium">
@@ -596,13 +943,13 @@ const OnlyMyOrder = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={9} className="p-4 text-center">
+                  <td colSpan={10} className="p-4 text-center">
                     Loading...
                   </td>
                 </tr>
               ) : paginatedOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="p-4 text-center text-gray-500">
+                  <td colSpan={10} className="p-4 text-center text-gray-500">
                     No orders found
                   </td>
                 </tr>
@@ -617,6 +964,14 @@ const OnlyMyOrder = () => {
                     }
                     className="border-b hover:bg-gray-50"
                   >
+                    <td className="p-3 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={selectedOrderIds.has(order.orderId)}
+                        onChange={() => toggleSelectOne(order.orderId)}
+                        disabled={order.status === "DELIVERED"}
+                      />
+                    </td>
                     <td className="p-3 text-sm font-medium">{order.orderId}</td>
                     <td className="p-3 text-sm">
                       {new Date(order.orderDate).toLocaleDateString()}
@@ -664,17 +1019,32 @@ const OnlyMyOrder = () => {
                     </td>
                     <td className="p-3 text-sm">
                       {order.selectedCourierName || "—"}
+                      {getAwbNumber(order) ? (
+                        <div className="text-xs text-gray-500">
+                          AWB: {getAwbNumber(order)}
+                        </div>
+                      ) : null}
                     </td>
                     <td className="p-3 text-sm">
                       <div className="flex gap-2">
-                        {/* <button
-                          onClick={() => handleCancelOrder(order.orderId)}
-                          className="text-red-500 hover:text-red-700 p-1"
-                          title="Cancel Order"
-                          disabled={order.status !== 'PENDING'}
-                        >
-                          <X size={16} />
-                        </button> */}
+                        {order.status === "PENDING" && !order.selectedCourierName && (
+                          <button
+                            onClick={() => handleApproveOne(order.orderId)}
+                            className="text-emerald-600 hover:text-emerald-800 p-1"
+                            title="Approve Order"
+                          >
+                            Approve
+                          </button>
+                        )}
+                        {order.status === "PENDING" && !order.selectedCourierName && (
+                          <button
+                            onClick={() => handleCancelOne(order.orderId)}
+                            className="text-red-500 hover:text-red-700 p-1"
+                            title="Cancel Order"
+                          >
+                            <X size={16} />
+                          </button>
+                        )}
                         <button
                           onClick={() => handleViewDetails(order)}
                           className="text-blue-500 hover:text-blue-700 p-1"
@@ -682,6 +1052,19 @@ const OnlyMyOrder = () => {
                         >
                           <Eye size={16} />
                         </button>
+                        {order.selectedCourierName && (
+                          <button
+                            onClick={() => handleGenerateLabel(order)}
+                            className="flex items-center gap-1 text-indigo-600 hover:text-indigo-800 text-xs font-medium"
+                            title="Generate Label"
+                            disabled={labelLoading[order.orderId]}
+                          >
+                            <Download size={14} />
+                            {labelLoading[order.orderId]
+                              ? "Generating..."
+                              : "Label"}
+                          </button>
+                        )}
                         {order.status === "ACCEPTED" &&
                           !order.selectedCourierName && (
                             <button
@@ -700,7 +1083,7 @@ const OnlyMyOrder = () => {
               )}
               {loadingMore && (
                 <tr>
-                  <td colSpan={9} className="p-4 text-center">
+                  <td colSpan={10} className="p-4 text-center">
                     Loading more orders...
                   </td>
                 </tr>
@@ -832,6 +1215,19 @@ const OnlyMyOrder = () => {
                       {selectedOrder.selectShippingCharges} (
                       {selectedOrder.selectedFreightMode})
                     </div>
+                    <div className="mt-2 text-sm text-gray-600">
+                      AWB: {getAwbNumber(selectedOrder) || "N/A"}
+                    </div>
+                    <button
+                      onClick={() => handleGenerateLabel(selectedOrder)}
+                      className="mt-3 inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+                      disabled={labelLoading[selectedOrder.orderId]}
+                    >
+                      <Download size={16} />
+                      {labelLoading[selectedOrder.orderId]
+                        ? "Generating label..."
+                        : "Generate Label"}
+                    </button>
                   </div>
                 ) : selectedOrder.status === "ACCEPTED" ? (
                   <div>
@@ -906,8 +1302,16 @@ const OnlyMyOrder = () => {
                 </button>
               </div>
               <p className="text-sm text-gray-500 mb-4">
-                Order ID: {shippingModalOrder.orderId}
+                {bulkScheduleIds.length > 0
+                  ? `Bulk scheduling ${bulkScheduleIds.length} orders`
+                  : `Order ID: ${shippingModalOrder.orderId}`}
               </p>
+              {bulkScheduleIds.length > 0 && (
+                <p className="text-xs text-amber-600 mb-4">
+                  The selected courier and payment method will be applied to all
+                  selected orders.
+                </p>
+              )}
 
               {shippingError && (
                 <div className="bg-red-50 text-red-700 rounded-xl p-3 mb-4">
@@ -972,6 +1376,9 @@ const OnlyMyOrder = () => {
                     Selected: {selectedShippingOption.courier_name} (
                     {selectedShippingOption.freight_mode})
                   </div>
+                  <div className="text-xs text-gray-500 mb-2">
+                    Wallet balance: ₹{Number(walletBalance || 0).toFixed(2)}
+                  </div>
                   <label className="block text-sm font-medium mb-1">
                     Payment Method
                   </label>
@@ -988,10 +1395,22 @@ const OnlyMyOrder = () => {
                   <button
                     onClick={() => handleScheduleOrder(shippingModalOrder)}
                     className="mt-4 w-full bg-emerald-600 text-white py-2 rounded-lg hover:bg-emerald-700"
-                    disabled={shippingLoading || !shippingPaymentMethod}
+                    disabled={
+                      shippingLoading || !shippingPaymentMethod || hasInsufficientBalance
+                    }
                   >
                     Schedule Order
                   </button>
+                  {shippingPaymentMethod === "PREPAID" && (
+                    <div className="mt-2 text-xs text-gray-500">
+                      Required: ₹{Number(requiredWalletAmount).toFixed(2)}
+                    </div>
+                  )}
+                  {hasInsufficientBalance && (
+                    <div className="mt-1 text-xs text-red-600">
+                      Insufficient wallet balance
+                    </div>
+                  )}
                 </div>
               )}
             </div>

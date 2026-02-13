@@ -32,7 +32,7 @@ const OrderList = ({
           <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>Total Value</th>
           <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>Shipping Charges</th>
           <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>Date</th>
-          <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>Actions</th>
+          {/* <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>Actions</th> */}
         </tr>
       </thead>
       <tbody>
@@ -45,49 +45,6 @@ const OrderList = ({
             <td style={{ padding: '12px' }}>₹{order.totalOrderValue}</td>
             <td style={{ padding: '12px' }}>₹{order.selectShippingCharges}</td>
             <td style={{ padding: '12px' }}>{new Date(order.orderDate).toLocaleDateString()}</td>
-            <td style={{ padding: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <select
-                  value={selectedStatuses[order.orderId] || order.status || 'PENDING'}
-                  onChange={(e) => handleStatusChange(order.orderId, e.target.value)}
-                  disabled={order.status === 'DELIVERED' || updating[order.orderId]}
-                  style={{
-                    padding: '6px 10px',
-                    border: '1px solid #ccc',
-                    borderRadius: '4px',
-                    backgroundColor: 'white',
-                    cursor: order.status === 'DELIVERED' ? 'not-allowed' : 'pointer',
-                    opacity: order.status === 'DELIVERED' ? 0.6 : 1,
-                    minWidth: '120px'
-                  }}
-                >
-                  {validStatuses.map(status => (
-                    <option key={status} value={status}>
-                      {status}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  onClick={() => handleUpdateClick(order.orderId)}
-                  disabled={updating[order.orderId] || order.status === 'DELIVERED' || selectedStatuses[order.orderId] === (order.status || 'PENDING')}
-                  style={{
-                    background: updating[order.orderId] || order.status === 'DELIVERED' || selectedStatuses[order.orderId] === (order.status || 'PENDING') ? '#ccc' : '#007bff',
-                    color: 'white',
-                    padding: '6px 12px',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: updating[order.orderId] || order.status === 'DELIVERED' ? 'not-allowed' : 'pointer',
-                    opacity: updating[order.orderId] || order.status === 'DELIVERED' ? 0.6 : 1,
-                    minWidth: 'auto'
-                  }}
-                >
-                  {updating[order.orderId] ? 'Updating...' : 'Update'}
-                </button>
-              </div>
-              {order.status === 'DELIVERED' && (
-                <p style={{ margin: '5px 0 0 0', color: '#28a745', fontSize: '12px' }}>Delivered - No updates</p>
-              )}
-            </td>
           </tr>
         ))}
       </tbody>
@@ -113,50 +70,9 @@ const OrderList = ({
             <p><strong>Total Value:</strong> ₹{order.totalOrderValue}</p>
             <p><strong>Date:</strong> {new Date(order.orderDate).toLocaleDateString()}</p>
           </div>
-          <div style={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            alignItems: 'stretch', 
-            gap: '10px' 
-          }}>
-            <select
-              value={selectedStatuses[order.orderId] || order.status || 'PENDING'}
-              onChange={(e) => handleStatusChange(order.orderId, e.target.value)}
-              disabled={order.status === 'DELIVERED' || updating[order.orderId]}
-              style={{
-                padding: '8px 12px',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                backgroundColor: 'white',
-                cursor: order.status === 'DELIVERED' ? 'not-allowed' : 'pointer',
-                opacity: order.status === 'DELIVERED' ? 0.6 : 1
-              }}
-            >
-              {validStatuses.map(status => (
-                <option key={status} value={status}>
-                  {status}
-                </option>
-              ))}
-            </select>
-            <button
-              onClick={() => handleUpdateClick(order.orderId)}
-              disabled={updating[order.orderId] || order.status === 'DELIVERED' || selectedStatuses[order.orderId] === (order.status || 'PENDING')}
-              style={{
-                background: updating[order.orderId] || order.status === 'DELIVERED' || selectedStatuses[order.orderId] === (order.status || 'PENDING') ? '#ccc' : '#007bff',
-                color: 'white',
-                padding: '8px 16px',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: updating[order.orderId] || order.status === 'DELIVERED' ? 'not-allowed' : 'pointer',
-                opacity: updating[order.orderId] || order.status === 'DELIVERED' ? 0.6 : 1
-              }}
-            >
-              {updating[order.orderId] ? 'Updating...' : 'Update Status'}
-            </button>
-          </div>
-          {order.status === 'DELIVERED' && (
-            <p style={{ marginTop: '10px', color: '#28a745', fontSize: '14px' }}>Order delivered - No further updates possible.</p>
-          )}
+          <p style={{ marginTop: '10px', color: '#6c757d', fontSize: '12px' }}>
+            Status updates disabled for admin
+          </p>
         </div>
       ))}
     </div>

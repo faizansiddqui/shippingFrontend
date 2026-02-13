@@ -4,11 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
+  import {
   Home,
   Truck,
   ShoppingCart,
   Archive,
+  Package,
   IndianRupee,
   Calculator,
   LogOut,
@@ -53,7 +54,7 @@ export default function Sidebar({ isOpen, onClose }) {
     <>
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-200 shadow-xl transition-transform duration-300 ease-in-out ${
+        className={`fixed inset-y-0 left-0 z-40 w-60 bg-white border-r border-gray-200 shadow-xl transition-transform duration-300 ease-in-out ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         } md:translate-x-0 md:static md:shadow-lg`}
       >
