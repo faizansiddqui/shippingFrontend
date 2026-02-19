@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../../utils/checkAuth"; // Adjust path as needed
 import { useWallet } from "@/context/WalletContext";
+import { API_BASE_URL } from "@/utils/api";
 
 const OnlyMyOrder = () => {
   const { user, loading: authLoading } = useAuth();
@@ -66,7 +67,7 @@ const OnlyMyOrder = () => {
     setLoading(!append);
     setError(null);
     try {
-      const res = await fetch("http://localhost:5000/user-orders", {
+      const res = await fetch(`${API_BASE_URL}/user-orders`, {
         method: "GET",
         credentials: "include",
       });
@@ -125,6 +126,15 @@ const OnlyMyOrder = () => {
     order?.waybill_number ||
     "";
 
+  const getLabelUrl = (order) =>
+    order?.labelUrl ||
+    order?.label_url ||
+    order?.label_link ||
+    order?.labelLink ||
+    order?.label ||
+    order?.pdf_label ||
+    "";
+
   // Filter orders based on user input
   useEffect(() => {
     let filtered = orders;
@@ -173,6 +183,11 @@ const OnlyMyOrder = () => {
 
   const getOrderIdForApi = (orderId) => encodeURIComponent(normalizeOrderId(orderId));
 
+  const getShipmentId = (orderId) => {
+    const normalized = normalizeOrderId(orderId);
+    return normalized.startsWith("#") ? normalized.slice(1) : normalized;
+  };
+
   const toggleSelectAllVisible = () => {
     const allIds = paginatedOrders.map((o) => o.orderId).filter(Boolean);
     const allSelected = allIds.every((id) => selectedOrderIds.has(id));
@@ -199,7 +214,7 @@ const OnlyMyOrder = () => {
       throw new Error("Order ID missing");
     }
     const res = await fetch(
-      `http://localhost:5000/orders/${getOrderIdForApi(normalizedId)}/update-status`,
+      `${API_BASE_URL}/orders/${getOrderIdForApi(normalizedId)}/update-status`,
       {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -405,6 +420,19 @@ const OnlyMyOrder = () => {
     return total > 0 ? total : Number(order.totalOrderValue || 0);
   };
 
+  const normalizeShippingOptions = (raw) => {
+    if (Array.isArray(raw)) return raw;
+    if (Array.isArray(raw?.data)) return raw.data;
+    if (Array.isArray(raw?.data?.serviceable_courier_list)) {
+      return raw.data.serviceable_courier_list;
+    }
+    if (Array.isArray(raw?.serviceable_courier_list)) {
+      return raw.serviceable_courier_list;
+    }
+    if (Array.isArray(raw?.available_couriers)) return raw.available_couriers;
+    return [];
+  };
+
   const fetchShippingOptions = async (order) => {
     if (!order?.pickupAddressName) {
       throw new Error("Pickup address is missing for this order");
@@ -418,7 +446,7 @@ const OnlyMyOrder = () => {
     }
 
     const pickupRes = await fetch(
-      `http://localhost:5000/fetchPickupLocationPicode?addressName=${encodeURIComponent(order.pickupAddressName)}`,
+      `${API_BASE_URL}/fetchPickupLocationPicode?addressName=${encodeURIComponent(order.pickupAddressName)}`,
       { method: "GET", credentials: "include" },
     );
     const pickupData = await pickupRes.json();
@@ -427,7 +455,7 @@ const OnlyMyOrder = () => {
     }
 
     const orderValue = calculateOrderValue(order);
-    const rateRes = await fetch("http://localhost:5000/order", {
+    const rateRes = await fetch(`${API_BASE_URL}/order`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -444,7 +472,14 @@ const OnlyMyOrder = () => {
       throw new Error(rateData?.error || "Shipping calculation failed");
     }
 
-    return rateData;
+    const options = normalizeShippingOptions(rateData);
+    if (!Array.isArray(options)) {
+      throw new Error("Unexpected courier options format");
+    }
+    if (options.length === 0 && (rateData?.message || rateData?.error)) {
+      throw new Error(rateData?.message || rateData?.error);
+    }
+    return options;
   };
 
   const openShippingModal = async (order) => {
@@ -501,16 +536,27 @@ const OnlyMyOrder = () => {
   const handleGenerateLabel = async (order) => {
     const orderId = order?.orderId;
     if (!orderId) return;
+    const existingLabel = getLabelUrl(order);
+    if (existingLabel) {
+      window.open(existingLabel, "_blank");
+      return;
+    }
     setLabelLoading((prev) => ({ ...prev, [orderId]: true }));
     try {
       const endpoints = [
+        // try refresh to pull latest from RapidShyp into DB
         {
-          url: `http://localhost:5000/orders/${getOrderIdForApi(orderId)}/generate-label`,
+          url: `${API_BASE_URL}/orders/${getOrderIdForApi(orderId)}/refresh-label`,
           method: "POST",
         },
         {
-          url: `http://localhost:5000/orders/${getOrderIdForApi(orderId)}/label`,
+          url: `${API_BASE_URL}/orders/${getOrderIdForApi(orderId)}/label`,
           method: "GET",
+        },
+        // legacy generate if backend supports it
+        {
+          url: `${API_BASE_URL}/orders/${getOrderIdForApi(orderId)}/generate-label`,
+          method: "POST",
         },
       ];
 
@@ -605,31 +651,66 @@ const OnlyMyOrder = () => {
     setShippingError(null);
     try {
       const results = await Promise.allSettled(
-        targetIds.map((orderId) =>
-          fetch(
-            `http://localhost:5000/orders/${getOrderIdForApi(orderId)}/update-shipping`,
+        targetIds.map(async (orderId) => {
+          const res = await fetch(
+            `${API_BASE_URL}/orders/${getOrderIdForApi(orderId)}/schedule`,
             {
-            method: "PATCH",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              selectShippingCharges: Number(
-                selectedShippingOption.total_Price_GST_Included,
-              ),
-              selectedCourierName: selectedShippingOption.courier_name,
-              selectedFreightMode: selectedShippingOption.freight_mode,
-              paymentMethod: shippingPaymentMethod,
-            }),
-          },
-          ).then(async (res) => {
-            const data = await res.json();
-            if (!res.ok || !data?.status) {
-              throw new Error(data?.message || "Failed to save delivery service");
+              method: "POST",
+              credentials: "include",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                selectShippingCharges: Number(
+                  selectedShippingOption.total_Price_GST_Included,
+                ),
+                selectedCourierName: selectedShippingOption.courier_name,
+                selectedFreightMode: selectedShippingOption.freight_mode,
+                paymentMethod: shippingPaymentMethod,
+                courier_code: selectedShippingOption.courier_code || "",
+              }),
+            },
+          );
+          const rawText = await res.text();
+          let data = null;
+          try {
+            data = rawText ? JSON.parse(rawText) : null;
+          } catch (err) {
+            // keep data as null
+          }
+          if (!res.ok || !data?.status) {
+            const rawMsg =
+              data?.message ||
+              data?.Message ||
+              rawText ||
+              "Scheduling failed. Please try again or contact support.";
+            const details = data?.details || data?.data;
+            const combined =
+              typeof details === "string" && details
+                ? `${rawMsg} (${details})`
+                : rawMsg;
+            const lower = combined.toLowerCase();
+            let friendly = combined;
+            if (lower.includes("insufficient wallet balance")) {
+              friendly =
+                "Insufficient wallet balance. Please recharge and try again.";
+            } else if (lower.includes("courier_code is required")) {
+              friendly = "Courier selection is missing. Please re-select courier.";
+            } else if (lower.includes("only accepted orders can be scheduled")) {
+              friendly = "Only accepted orders can be scheduled.";
+            } else if (lower.includes("failed to fetch order info")) {
+              friendly =
+                "We couldn't fetch order info from Rapidshyp. Please try again shortly.";
+            } else if (lower.includes("failed to assign awb")) {
+              friendly =
+                "AWB could not be assigned. Please try again later or contact support.";
+            } else if (lower.includes("failed to schedule pickup")) {
+              friendly =
+                "Pickup scheduling failed. Please try again later.";
             }
-            applyWalletBalanceFromResponse(data);
-            return data;
-          }),
-        ),
+            throw new Error(friendly);
+          }
+          applyWalletBalanceFromResponse(data);
+          return data;
+        }),
       );
 
       const baseUpdated = {
@@ -652,18 +733,18 @@ const OnlyMyOrder = () => {
           const orderId = targetIds[idx];
           const payload =
             r.value?.order || r.value?.data || r.value?.updatedOrder || null;
-          const awb =
-            r.value?.awbNumber ||
-            r.value?.awb ||
-            r.value?.awb_number ||
-            payload?.awbNumber ||
-            payload?.awb ||
-            payload?.awb_number ||
+          const awb = r.value?.awb || payload?.awb || "";
+          const label =
+            r.value?.labelUrl ||
+            r.value?.label_url ||
+            payload?.labelUrl ||
+            payload?.label_url ||
             "";
           perIdUpdates[orderId] = {
             ...baseUpdated,
             ...(payload || {}),
             ...(awb ? { awbNumber: awb } : {}),
+            ...(label ? { labelUrl: label } : {}),
           };
         });
 
@@ -709,7 +790,7 @@ const OnlyMyOrder = () => {
       try {
         // Update status to REJECTED (assuming cancellation maps to REJECTED)
         const res = await fetch(
-          `http://localhost:5000/orders/${orderId}/update-status`,
+          `${API_BASE_URL}/orders/${orderId}/update-status`,
           {
             method: "PATCH",
             headers: {
@@ -1211,8 +1292,8 @@ const OnlyMyOrder = () => {
                     <h3 className="font-semibold mb-3">Courier Details</h3>
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Package className="h-4 w-4" />
-                      Shipped via: {selectedOrder.selectedCourierName}₹
-                      {selectedOrder.selectShippingCharges} (
+                      Shipped Via {selectedOrder.selectedCourierName} ₹
+                      {Number(selectedOrder.selectShippingCharges).toFixed(2)} (
                       {selectedOrder.selectedFreightMode})
                     </div>
                     <div className="mt-2 text-sm text-gray-600">
