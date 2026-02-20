@@ -124,11 +124,15 @@ const OnlyMyOrder = () => {
     order?.airwayBill ||
     order?.waybill ||
     order?.waybill_number ||
+    order?.AWB ||
     "";
 
   const getLabelUrl = (order) =>
     order?.labelUrl ||
     order?.label_url ||
+    order?.file_name ||
+    order?.fileName ||
+    order?.fileName ||
     order?.label_link ||
     order?.labelLink ||
     order?.label ||
@@ -1105,6 +1109,11 @@ const OnlyMyOrder = () => {
                           AWB: {getAwbNumber(order)}
                         </div>
                       ) : null}
+                      {order.rapid_shipment_id ? (
+                        <div className="text-[11px] text-gray-400">
+                          Shipment ID: {order.rapid_shipment_id}
+                        </div>
+                      ) : null}
                     </td>
                     <td className="p-3 text-sm">
                       <div className="flex gap-2">
@@ -1298,6 +1307,9 @@ const OnlyMyOrder = () => {
                     </div>
                     <div className="mt-2 text-sm text-gray-600">
                       AWB: {getAwbNumber(selectedOrder) || "N/A"}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Shipment ID: {selectedOrder.rapid_shipment_id || "N/A"}
                     </div>
                     <button
                       onClick={() => handleGenerateLabel(selectedOrder)}
