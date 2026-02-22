@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { API_BASE_URL } from "@/utils/api";
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -23,7 +24,7 @@ const Login = () => {
         const userData = { email, password };
 
         try {
-            const response = await fetch('http://localhost:5000/login', {
+        const response = await fetch(`${API_BASE_URL}/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -39,7 +40,7 @@ const Login = () => {
             if (response.ok) {
                 setSuccess('Login successful!');
                 // Backend sets cookies; fetch profile for full user
-                const profileRes = await fetch('http://localhost:5000/profile', { credentials: 'include' });
+            const profileRes = await fetch(`${API_BASE_URL}/profile`, { credentials: 'include' });
                 if (profileRes.ok) {
                     const profileData = await profileRes.json();
                     localStorage.setItem('user', JSON.stringify(profileData.user));
@@ -58,7 +59,7 @@ const Login = () => {
     };
 
     const handleGoogleLogin = () => {
-        window.location.href = "http://localhost:5000/auth/google";
+        window.location.href = `${API_BASE_URL}/auth/google`;
     };
 
     return (

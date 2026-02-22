@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import { API_BASE_URL } from "@/utils/api";
 import { Search, RefreshCw } from "lucide-react";
 
 const ShipmentPage = () => {
@@ -20,7 +21,7 @@ const ShipmentPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("http://localhost:5000/user-orders", {
+      const res = await fetch(`${API_BASE_URL}/user-orders`, {
         method: "GET",
         credentials: "include",
       });

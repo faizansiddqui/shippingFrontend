@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { CheckCircle, XCircle } from "lucide-react";
+import { API_BASE_URL } from "@/utils/api";
 
 export default function AddNewOrder() {
   const [formData, setFormData] = useState({
@@ -55,7 +56,7 @@ export default function AddNewOrder() {
   useEffect(() => {
     const fetchPickupAddresses = async () => {
       try {
-        const res = await fetch("http://localhost:5000/fetchAllPickupAddress", {
+        const res = await fetch(`${API_BASE_URL}/fetchAllPickupAddress`, {
           method: "GET",
           credentials: "include", // <- MUST for httpOnly cookies
         });
@@ -89,7 +90,7 @@ export default function AddNewOrder() {
 
     if (!value.trim()) return;
 
-    const url = `http://localhost:5000/fetchPickupLocationPicode?addressName=${encodeURIComponent(value)}`;
+    const url = `${API_BASE_URL}/fetchPickupLocationPicode?addressName=${encodeURIComponent(value)}`;
 
     try {
       // 1) first attempt — include cookies
@@ -98,7 +99,7 @@ export default function AddNewOrder() {
       // 2) if unauthorized, try refresh endpoint once (also include cookies)
       if (res.status === 401) {
         console.warn("Got 401 — attempting token refresh...");
-        const refreshRes = await fetch("http://localhost:5000/refresh", {
+        const refreshRes = await fetch(`${API_BASE_URL}/refresh`, {
           method: "POST",
           credentials: "include",
         });
@@ -252,7 +253,7 @@ export default function AddNewOrder() {
     };
 
     try {
-      const res = await fetch("http://localhost:5000/create-order", {
+      const res = await fetch(`${API_BASE_URL}/create-order`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include", // ← ADD THIS: Send auth cookies

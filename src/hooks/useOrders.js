@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { API_BASE_URL } from "@/utils/api";
 
 export const useOrders = () => {
   const [orders, setOrders] = useState([]);
@@ -36,7 +37,7 @@ export const useOrders = () => {
     try {
       setError(null);
       setLoading(true);
-      const res = await fetch('http://localhost:5000/all-orders', {
+      const res = await fetch(`${API_BASE_URL}/all-orders`, {
         method: 'GET',
       });
 
@@ -76,7 +77,7 @@ export const useOrders = () => {
         console.log(`bill payment:${selectShippingCharges}`); // Added the log here for bill/shipping amount
       }
 
-      const res = await fetch(`http://localhost:5000/orders/${orderId}/update-status`, {
+      const res = await fetch(`${API_BASE_URL}/orders/${orderId}/update-status`, {
         method: 'PATCH',
         credentials: "include",
         headers: {

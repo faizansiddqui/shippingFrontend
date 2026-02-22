@@ -1,5 +1,6 @@
 "use client";
 import { createContext, useContext, useState, useEffect } from "react";
+import { API_BASE_URL } from "@/utils/api";
 
 const WalletContext = createContext();
 
@@ -9,7 +10,7 @@ export const WalletProvider = ({ children }) => {
   useEffect(() => {
     const fetchBalance = async () => {
       try {
-        const res = await fetch("http://localhost:5000/wallet/balance", {
+        const res = await fetch(`${API_BASE_URL}/wallet/balance`, {
           credentials: "include",
         });
         if (res.ok) {

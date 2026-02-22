@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from "@/utils/api";
 import { Package, Clock, MapPin, CheckCircle, TrendingUp, ShoppingCart, Archive, IndianRupee } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from '../../utils/checkAuth'; // Adjust path as needed
@@ -14,7 +15,7 @@ export default function DashboardPage() {
   const fetchOrders = async () => {
     if (!user) return;
     try {
-      const res = await fetch('http://localhost:5000/user-orders', {
+      const res = await fetch(`${API_BASE_URL}/user-orders`, {
         method: 'GET',
         credentials: 'include',
       });

@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { API_BASE_URL } from "@/utils/api";
 
 const AuthCallback = () => {
     const router = useRouter();
@@ -9,7 +10,7 @@ const AuthCallback = () => {
     useEffect(() => {
         const checkAuth = async () => {
             try {
-                const res = await fetch('https://backendshipping.onrender.com/profile', {
+                const res = await fetch(`${API_BASE_URL}/profile`, {
                     credentials: 'include',
                 });
                 if (res.ok) {

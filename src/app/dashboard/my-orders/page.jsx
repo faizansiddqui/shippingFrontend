@@ -476,7 +476,13 @@ const OnlyMyOrder = () => {
       throw new Error(rateData?.error || "Shipping calculation failed");
     }
 
-    const options = normalizeShippingOptions(rateData);
+    const surcharge = 20;
+    const options = normalizeShippingOptions(rateData).map((item) => ({
+      ...item,
+      total_Price_GST_Included:
+        Number(item.total_Price_GST_Included || 0) + surcharge,
+      _surchargeIncluded: surcharge,
+    }));
     if (!Array.isArray(options)) {
       throw new Error("Unexpected courier options format");
     }

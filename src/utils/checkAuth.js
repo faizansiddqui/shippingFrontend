@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { API_BASE_URL } from "@/utils/api";
 import { useRouter } from "next/navigation";
 
 export function useAuth(redirectOnUnauth = true) {
@@ -35,7 +36,7 @@ export function useAuth(redirectOnUnauth = true) {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:5000/profile", {
+      const res = await fetch(`${API_BASE_URL}/profile`, {
         method: "GET",
         credentials: "include",
         cache: "no-store",
@@ -51,7 +52,7 @@ export function useAuth(redirectOnUnauth = true) {
 
       // 🔄 Try refresh token if unauthorized
       if (res.status === 401) {
-        const refreshRes = await fetch("http://localhost:5000/profile/refresh", {
+        const refreshRes = await fetch(`${API_BASE_URL}/profile/refresh`, {
           method: "POST",
           credentials: "include",
         });
@@ -80,7 +81,7 @@ export function useAuth(redirectOnUnauth = true) {
   // ✅ Logout handler
   const logout = useCallback(async () => {
     try {
-      await fetch("http://localhost:5000/logout", {
+      await fetch(`${API_BASE_URL}/logout`, {
         method: "POST",
         credentials: "include",
       });

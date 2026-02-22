@@ -6,6 +6,7 @@ import { Menu, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "@/utils/checkAuth";
+import { API_BASE_URL } from "@/utils/api";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -39,15 +40,14 @@ const Navbar = () => {
 
     // Try refresh via your backend, then fetch profile (fallback flow you had)
     try {
-      const refreshRes = await fetch(
-        "https://backendshipping.onrender.com/refresh",
-        { method: "POST", credentials: "include" }
-      );
+      const refreshRes = await fetch(`${API_BASE_URL}/refresh`, {
+        method: "POST",
+        credentials: "include",
+      });
       if (refreshRes.ok) {
-        const profileRes = await fetch(
-          "https://backendshipping.onrender.com/profile",
-          { credentials: "include" }
-        );
+        const profileRes = await fetch(`${API_BASE_URL}/profile`, {
+          credentials: "include",
+        });
         if (profileRes.ok) {
           const data = await profileRes.json();
           // update local storage to match hook expectations
@@ -75,10 +75,10 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     try {
-      await fetch("https://backendshipping.onrender.com/logout", {
-        method: "POST",
-        credentials: "include",
-      });
+        await fetch(`${API_BASE_URL}/logout`, {
+          method: "POST",
+          credentials: "include",
+        });
     } catch (err) {
       console.error("Logout error:", err);
     } finally {
