@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 import { Mail, Lock, Eye, EyeOff, User } from 'lucide-react'
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { API_BASE_URL } from "@/utils/api";
 
 const Signup = () => {
     const [email, setEmail] = useState('');
@@ -36,7 +37,7 @@ const Signup = () => {
         const userData = { email, password };
 
         try {
-            const response = await fetch('http://localhost:5000/signup', {
+            const response = await fetch(`${API_BASE_URL}/signup`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -50,7 +51,7 @@ const Signup = () => {
             if (response.ok) {
                 setSuccess(data.message || 'Signup successful!');
                 // Backend sets cookies; fetch profile to get full user for localStorage
-                const profileRes = await fetch('http://localhost:5000/profile', { credentials: 'include' });
+                const profileRes = await fetch(`${API_BASE_URL}/profile`, { credentials: 'include' });
                 if (profileRes.ok) {
                     const profileData = await profileRes.json();
                     localStorage.setItem('user', JSON.stringify(profileData.user));
