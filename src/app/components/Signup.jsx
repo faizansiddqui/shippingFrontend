@@ -46,7 +46,12 @@ const Signup = () => {
                 body: JSON.stringify(userData)
             });
 
-            const data = await response.json();
+            let data = null;
+            try {
+                data = await response.json();
+            } catch (_) {
+                data = null;
+            }
 
             if (response.ok) {
                 setSuccess(data.message || 'Signup successful!');
@@ -59,7 +64,12 @@ const Signup = () => {
                 }
                 setTimeout(() => { router.push('/'); }, 1500);
             } else {
-                setError(data.message || data.error || 'Signup failed');
+                const msg =
+                  (data && (data.message || data.error)) ||
+                  (response.status === 409
+                    ? 'User already exists. Try logging in.'
+                    : 'Unable to sign up right now. Please try again.');
+                setError(msg);
             }
         } catch (error) {
             console.error('Error during signup:', error);

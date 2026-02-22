@@ -33,9 +33,12 @@ const Login = () => {
                 body: JSON.stringify(userData),
             });
 
-            const data = await response.json();
-            console.log(data);
-            
+            let data = null;
+            try {
+                data = await response.json();
+            } catch (_) {
+                data = null;
+            }
 
             if (response.ok) {
                 setSuccess('Login successful!');
@@ -48,7 +51,12 @@ const Login = () => {
                 }
                 setTimeout(() => { router.push('/'); }, 1000);
             } else {
-                setError(data.error || 'Invalid credentials');
+                const msg =
+                  (data && (data.error || data.message)) ||
+                  (response.status === 401 || response.status === 400
+                    ? 'Email or password is incorrect.'
+                    : 'Unable to log in right now. Please try again.');
+                setError(msg);
             }
         } catch (error) {
             console.error('Error during login:', error);
