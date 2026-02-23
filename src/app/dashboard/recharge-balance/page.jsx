@@ -162,7 +162,17 @@ export default function RechargeBalancePage() {
         body: JSON.stringify({ amount: Number(amount) }),
       });
 
-      if (!createRes.ok) throw new Error("Order failed");
+      if (!createRes.ok) {
+        const t = await createRes.text();
+        let msg = "Order failed";
+        try {
+          const j = t ? JSON.parse(t) : {};
+          msg = j.message || j.error || msg;
+        } catch (_) {
+          if (t) msg = t;
+        }
+        throw new Error(msg);
+      }
 
       const order = await createRes.json();
       if (!order?.id) throw new Error("No order ID");
@@ -190,7 +200,9 @@ export default function RechargeBalancePage() {
               }),
             });
 
-            const verifyData = await verifyRes.json();
+            const verifyText = await verifyRes.text();
+            let verifyData = {};
+            try { verifyData = verifyText ? JSON.parse(verifyText) : {}; } catch (_) { verifyData = {}; }
 
             if (verifyRes.ok && verifyData.success) {
               await fetchBalance();
