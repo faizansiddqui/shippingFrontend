@@ -1,12 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
   reactStrictMode: false,
   images: {
     unoptimized: true,
-
   },
-  trailingSlash: true,
+  // Keep as a serverful build so API routes remain available in production
+  trailingSlash: false,
 };
 
 export default nextConfig;

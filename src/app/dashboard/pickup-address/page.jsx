@@ -105,10 +105,9 @@ export default function PickupAddress() {
     if (!payload.use_alt_rto_address) payload.create_rto_address = {};
 
     try {
-      const res = await fetch("http://localhost:5000/create/pickup_location", {
+      const res = await fetch("/api/pickup_location", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: 'include',
         body: JSON.stringify(payload),
       });
       const data = await res.json();

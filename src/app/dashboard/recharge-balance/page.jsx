@@ -36,7 +36,7 @@ export default function RechargeBalancePage() {
     if (initialLoad) setBalanceLoading(true); // Spinner only on first load
 
     try {
-      const res = await fetch("http://localhost:5000/wallet/balance", {
+      const res = await fetch("/api/wallet/balance", {
         method: "GET",
         credentials: "include",
       });
@@ -58,7 +58,7 @@ export default function RechargeBalancePage() {
   // Fetch History
   async function fetchHistory() {
     try {
-      const res = await fetch("http://localhost:5000/wallet/history", {
+      const res = await fetch("/api/wallet/history", {
         method: "GET",
         credentials: "include",
       });
@@ -155,7 +155,7 @@ export default function RechargeBalancePage() {
 
     setSubmitting(true);
     try {
-      const createRes = await fetch("http://localhost:5000/create-razor", {
+      const createRes = await fetch("/api/create-razor", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -178,20 +178,17 @@ export default function RechargeBalancePage() {
         order_id: order.id,
         handler: async function (response) {
           try {
-            const verifyRes = await fetch(
-              "http://localhost:5000/verify-payment",
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({
-                  order_id: response.razorpay_order_id,
-                  payment_id: response.razorpay_payment_id,
-                  signature: response.razorpay_signature,
-                  amount: Number(amount),
-                }),
-              },
-            );
+            const verifyRes = await fetch("/api/verify-payment", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+              body: JSON.stringify({
+                order_id: response.razorpay_order_id,
+                payment_id: response.razorpay_payment_id,
+                signature: response.razorpay_signature,
+                amount: Number(amount),
+              }),
+            });
 
             const verifyData = await verifyRes.json();
 
