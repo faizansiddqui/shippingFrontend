@@ -24,7 +24,7 @@ const Login = () => {
         const userData = { email, password };
 
         try {
-        const response = await fetch(`${API_BASE_URL}/login`, {
+        const response = await fetch(`/api/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -43,7 +43,7 @@ const Login = () => {
             if (response.ok) {
                 setSuccess('Login successful!');
                 // Backend sets cookies; fetch profile for full user
-            const profileRes = await fetch(`${API_BASE_URL}/profile`, { credentials: 'include' });
+            const profileRes = await fetch(`/api/profile`, { credentials: 'include' });
                 if (profileRes.ok) {
                     const profileData = await profileRes.json();
                     localStorage.setItem('user', JSON.stringify(profileData.user));
@@ -67,7 +67,7 @@ const Login = () => {
     };
 
     const handleGoogleLogin = () => {
-        window.location.href = `${API_BASE_URL}/auth/google`;
+        window.location.href = `/api/auth/google`;
     };
 
     return (

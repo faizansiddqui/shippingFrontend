@@ -108,6 +108,7 @@ export default function PickupAddress() {
       const res = await fetch("/api/pickup_location", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(payload),
       });
       const text = await res.text();

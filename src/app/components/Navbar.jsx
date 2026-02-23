@@ -40,7 +40,7 @@ const Navbar = () => {
 
     // Try refresh via your backend, then fetch profile (fallback flow you had)
     try {
-      const refreshRes = await fetch(`${API_BASE_URL}/refresh`, {
+      const refreshRes = await fetch(`/api/refresh`, {
         method: "POST",
         credentials: "include",
       });

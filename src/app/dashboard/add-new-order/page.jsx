@@ -99,7 +99,7 @@ export default function AddNewOrder() {
       // 2) if unauthorized, try refresh endpoint once (also include cookies)
       if (res.status === 401) {
         console.warn("Got 401 — attempting token refresh...");
-        const refreshRes = await fetch(`${API_BASE_URL}/refresh`, {
+        const refreshRes = await fetch(`/api/refresh`, {
           method: "POST",
           credentials: "include",
         });
@@ -256,6 +256,7 @@ export default function AddNewOrder() {
       const res = await fetch(`/api/create-order`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(payload),
       });
       const data = await res.json();
