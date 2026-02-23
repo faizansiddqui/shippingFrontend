@@ -111,15 +111,23 @@ export default function Inquiry() {
                 total_order_value: formData.shipValue,
                 weight: chargeable_kg,
             };
-            const res = await fetch('https://backendshipping.onrender.com/order', {
+            const res = await fetch('/api/order', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body),
             });
             const data = await res.json();
-            console.log(data);
-            // Assuming data is an array of {courier_name, days, price, gst}
-            const mappedRates = data.map((d) => {
+            console.log('order api data', data);
+
+            // Normalize response shape; ensure we always work with an array
+            const rows = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : null;
+            if (!rows) {
+                console.error('Unexpected order response', data);
+                setRates([]);
+                return;
+            }
+
+            const mappedRates = rows.map((d) => {
                 const surcharge = 20; // flat handling fee requested
                 const baseFreight = Number(d.total_freight) || 0;
                 const gst = Number(d.GST) || 0;
