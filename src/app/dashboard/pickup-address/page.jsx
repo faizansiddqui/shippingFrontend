@@ -110,9 +110,12 @@ export default function PickupAddress() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const data = await res.json();
+      const text = await res.text();
+      let data = {};
+      try { data = text ? JSON.parse(text) : {}; } catch (_) { /* ignore */ }
+
       if (res.ok) {
-        setMessage({ type: "success", text: "Pickup address created successfully" });
+        setMessage({ type: "success", text: data.message || "Pickup address created successfully" });
         setFormData({
           address_name: "",
           contact_name: "",
@@ -138,7 +141,8 @@ export default function PickupAddress() {
           },
         });
       } else {
-        setMessage({ type: "error", text: data.message || "Failed to create pickup address" });
+        const detail = data.detail || data.error || data.message || text || "Failed to create pickup address";
+        setMessage({ type: "error", text: detail });
       }
     } catch (err) {
       setMessage({ type: "error", text: err.message });
