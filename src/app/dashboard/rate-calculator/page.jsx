@@ -7,6 +7,7 @@ const page = () => {
       <Inquiry />
     </div>
   )
+  
 }
 
 export default page
