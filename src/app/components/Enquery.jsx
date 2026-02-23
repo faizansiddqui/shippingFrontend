@@ -7,28 +7,28 @@ export default function Inquiry() {
     const [formData, setFormData] = useState({
         pickupPin: '',
         destPin: '',
-        length: 10,
-        width: 20,
-        height: 3,
-        actualWeight: 500,
+        length: 0,
+        width: 0,
+        height: 0,
+        actualWeight: 0,
         weightUnit: 'gram',
         volWeight: 0,
-        shipValue: 1000,
+        shipValue: 0,
         parcelType: 'prepaid'
     });
 
-    const [pickupLocation, setPickupLocation] = useState({ city: 'Delhi', pin: '110001' });
-    const [destLocation, setDestLocation] = useState({ city: 'Hyderabad', pin: '500001' });
-    const [weightInfo, setWeightInfo] = useState({ vol: 0.5, actual: 0.5 });
+    const [pickupLocation, setPickupLocation] = useState({ city: '-', pin: '-' });
+    const [destLocation, setDestLocation] = useState({ city: '-', pin: '-' });
+    const [weightInfo, setWeightInfo] = useState({ vol: 0, actual: 0 });
 
     const [rates, setRates] = useState([
-        { img: '/image1.png', days: 4.3, price: '₹0.00', gst: 0.00, total_price_gst_included: 0, cutoff_time: '00:00', },
-        { img: '/image2.png', days: 4.6, price: '₹0.00', gst: 0.00, total_price_gst_included: 0, cutoff_time: '00:00', },
-        { img: '/image3.png', days: 3.8, price: '₹0.00', gst: 0.00, total_price_gst_included: 0, cutoff_time: '00:00', },
-        { img: '/image4.png', days: 7, price: '₹0.00', gst: 0.00, total_price_gst_included: 0, cutoff_time: '00:00', },
-        { img: '/image5.png', days: 4.2, price: '₹0.00', gst: 0.00, total_price_gst_included: 0, cutoff_time: '00:00', },
-        { img: '/image6.png', days: 2, price: '₹0.00', gst: 0.00, total_price_gst_included: 0, cutoff_time: '00:00', },
-        { img: '/image7.png', days: 4.6, price: '₹0.00', gst: 0.00, total_price_gst_included: 0, cutoff_time: '00:00', },
+        { img: '/image1.png', days: 4.3, price: 0, gst: 0.00, total_price_gst_included: 0, cutoff_time: '00:00' },
+        { img: '/image2.png', days: 4.6, price: 0, gst: 0.00, total_price_gst_included: 0, cutoff_time: '00:00' },
+        { img: '/image3.png', days: 3.8, price: 0, gst: 0.00, total_price_gst_included: 0, cutoff_time: '00:00' },
+        { img: '/image4.png', days: 7, price: 0, gst: 0.00, total_price_gst_included: 0, cutoff_time: '00:00' },
+        { img: '/image5.png', days: 4.2, price: 0, gst: 0.00, total_price_gst_included: 0, cutoff_time: '00:00' },
+        { img: '/image6.png', days: 2, price: 0, gst: 0.00, total_price_gst_included: 0, cutoff_time: '00:00' },
+        { img: '/image7.png', days: 4.6, price: 0, gst: 0.00, total_price_gst_included: 0, cutoff_time: '00:00' },
     ]);
 
     const [isLoading, setIsLoading] = useState(false);
@@ -45,6 +45,8 @@ export default function Inquiry() {
     };
 
     const ratesRef = useRef(null);
+
+    const formatCurrency = (value) => `\u20B9${Number(value || 0).toFixed(2)}`;
 
     useEffect(() => {
         // Calculate initial volumetric weight on mount
@@ -117,16 +119,23 @@ export default function Inquiry() {
             const data = await res.json();
             console.log(data);
             // Assuming data is an array of {courier_name, days, price, gst}
-            const mappedRates = data.map((d) => ({
-                courier: d.courier_name,
-                days: d.days,
-                price: `₹${parseFloat(d.total_freight).toFixed(2)}`,
-                gst: d.GST,
-                total_price_gst_included: d.total_Price_GST_Included,
-                img: courierImageMap[d.courier_name] || null,
-                cutoff_time: d.cutoff_time,
-            }));
+            const mappedRates = data.map((d) => {
+                const surcharge = 20; // flat handling fee requested
+                const baseFreight = Number(d.total_freight) || 0;
+                const gst = Number(d.GST) || 0;
+                const backendTotal = Number(d.total_Price_GST_Included);
+                const payable = (Number.isNaN(backendTotal) ? baseFreight + gst : backendTotal) + surcharge;
 
+                return {
+                    courier: d.courier_name,
+                    days: d.days,
+                    price: baseFreight + surcharge,
+                    gst,
+                    total_price_gst_included: payable,
+                    img: courierImageMap[d.courier_name] || null,
+                    cutoff_time: d.cutoff_time,
+                };
+            });
             setRates(mappedRates);
             setWeightInfo({ vol: vol_kg, actual: actual_kg });
             
@@ -267,7 +276,7 @@ export default function Inquiry() {
                         {/* Shipment Value and Parcel Type */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Shipment Value (₹)</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Shipment Value (INR)</label>
                                 <input
                                     type="number"
                                     name="shipValue"
@@ -332,7 +341,7 @@ export default function Inquiry() {
                             <span>{destLocation.pin}</span>
                         </div>
                         <div className="text-sm text-gray-600">{formData.parcelType.charAt(0).toUpperCase() + formData.parcelType.slice(1)}</div>
-                        <div className="text-sm text-gray-600">Weight: Volumetric {weightInfo.vol.toFixed(1)}kg | Actual {weightInfo.actual.toFixed(1)}kg</div>
+                        <div className="text-sm text-gray-600">Weight: Volumetric {weightInfo.vol.toFixed(1)}kg | Actual {weightInfo.actual}kg</div>
                         <div className="text-sm text-green-600 font-medium">Eligible for GST input tax credit</div>
                     </div>
 
@@ -377,15 +386,15 @@ export default function Inquiry() {
                                         {/* Price */}
                                         <td className="py-4 px-3 text-right">
                                             <div className="text-gray-900 font-semibold text-lg">
-                                                {row.price}
+                                                {formatCurrency(row.price)}
                                             </div>
                                             <div className="text-xs text-gray-500 mt-1">
-                                                ₹{Math.ceil(row.gst)} GST
+                                                {formatCurrency(row.gst)} GST
                                             </div>
                                             <div className="mt-2 text-sm">
                                                 <span className="text-gray-700 font-semibold  "> Payable Price </span>
                                                 <span className="text-purple-500 font-bold ">
-                                                    ₹{Math.ceil(row.total_price_gst_included)}
+                                                    {formatCurrency(row.total_price_gst_included)}
                                                 </span>
                                             </div>
                                         </td>
