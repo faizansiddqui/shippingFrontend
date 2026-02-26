@@ -183,7 +183,7 @@ export default function RechargeBalancePage() {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: order.amount,
         currency: order.currency,
-        name: "Faizan Wallet",
+        name: "MS Logistic",
         description: "Recharge Balance",
         order_id: order.id,
         handler: async function (response) {
@@ -228,9 +228,20 @@ export default function RechargeBalancePage() {
           contact: "9999999999",
         },
         theme: { color: "#0d6efd" },
+        modal: {
+          ondismiss: () => {
+            setSubmitting(false);
+            alert("Payment cancelled");
+          },
+        },
       };
 
       const rzr = new window.Razorpay(options);
+      rzr.on("payment.failed", (resp) => {
+        console.warn("Razorpay payment failed", resp);
+        alert("Payment failed or cancelled");
+        setSubmitting(false);
+      });
       rzr.open();
     } catch (err) {
       console.error(err);

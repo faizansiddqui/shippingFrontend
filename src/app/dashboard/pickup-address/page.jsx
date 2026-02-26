@@ -98,9 +98,6 @@ export default function PickupAddress() {
 
     setLoading(true);
     const payload = { ...formData, user_id: user.id };
-    console.log("Payload", payload);
-    console.log("User Id", user.id);
-    
     
     if (!payload.use_alt_rto_address) payload.create_rto_address = {};
 

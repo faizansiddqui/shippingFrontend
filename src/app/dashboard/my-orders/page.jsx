@@ -72,7 +72,6 @@ const OnlyMyOrder = () => {
         credentials: "include",
       });
       const data = await res.json();
-      console.log("Fetched user orders:", data);
 
       if (res.ok && data.status) {
         const newOrders = data.data || [];

@@ -117,7 +117,6 @@ export default function Inquiry() {
                 body: JSON.stringify(body),
             });
             const data = await res.json();
-            console.log('order api data', data);
 
             // Normalize response shape; ensure we always work with an array
             const rows = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : null;

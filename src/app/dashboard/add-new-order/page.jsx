@@ -105,7 +105,6 @@ export default function AddNewOrder() {
         });
 
         if (refreshRes.ok) {
-          console.log("Token refresh succeeded — retrying pincode fetch");
           res = await fetch(url, { method: "GET", credentials: "include" });
         } else {
           console.warn("Refresh failed:", await refreshRes.text());
