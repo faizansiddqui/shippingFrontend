@@ -1,7 +1,9 @@
 "use client";
 
-// Default to proxying through Next.js API routes so cookies are handled
-// by the frontend host. Override with NEXT_PUBLIC_API_BASE_URL to call
-// the backend directly when needed.
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "/api";
+// Prefer proxying through Next.js API routes so cookies are handled
+// by the frontend host. To bypass the proxy and call the backend directly,
+// set NEXT_PUBLIC_BYPASS_PROXY=true and NEXT_PUBLIC_API_BASE_URL.
+const bypassProxy = process.env.NEXT_PUBLIC_BYPASS_PROXY === "true";
+export const API_BASE_URL = bypassProxy
+  ? (process.env.NEXT_PUBLIC_API_BASE_URL || "/api")
+  : "/api";
