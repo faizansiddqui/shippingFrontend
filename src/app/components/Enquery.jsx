@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from 'react';
+import { apiFetch, ApiError } from '@/utils/apiClient';
 import Image from 'next/image';
 
 export default function Inquiry() {
@@ -33,6 +34,7 @@ export default function Inquiry() {
 
     const [isLoading, setIsLoading] = useState(false);
     const [highlightRates, setHighlightRates] = useState(false);
+    const [errorMsg, setErrorMsg] = useState('');
 
     const courierImageMap = {
         'BlueDart Express': '/image1.png',
@@ -78,6 +80,7 @@ export default function Inquiry() {
 
     const fetchLocation = async (pin, isPickup) => {
         if (pin.length !== 6) return;
+        setErrorMsg('');
         try {
             const res = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
             const data = await res.json();
@@ -111,17 +114,13 @@ export default function Inquiry() {
                 total_order_value: formData.shipValue,
                 weight: chargeable_kg,
             };
-            const res = await fetch('/api/order', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body),
-            });
-            const data = await res.json();
+            const data = await apiFetch('/api/order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
 
             // Normalize response shape; ensure we always work with an array
             const rows = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : null;
             if (!rows) {
-                console.error('Unexpected order response', data);
+                const msg = (data && (data.message || data.error)) || 'Unexpected order response';
+                setErrorMsg(msg);
                 setRates([]);
                 return;
             }
@@ -157,6 +156,8 @@ export default function Inquiry() {
             }
         } catch (e) {
             console.error(e);
+            if (e instanceof ApiError) setErrorMsg(e.message || 'Request failed');
+            else setErrorMsg('Something went wrong');
         }
         setIsLoading(false);
 
@@ -182,6 +183,11 @@ export default function Inquiry() {
                         Parcel Inquiry
                     </h2>
                     <div className="space-y-6">
+                        {errorMsg && (
+                            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                                {errorMsg}
+                            </div>
+                        )}
                         {/* Pincode Inputs */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>

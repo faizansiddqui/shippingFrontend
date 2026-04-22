@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../../utils/checkAuth";
+import { apiFetch, ApiError } from '@/utils/apiClient';
 import { useRouter } from "next/navigation";
 import { ArrowDown, ArrowUp, DownArrow, RefreshCw } from "lucide-react"; // Import the down arrow icon
 
@@ -36,17 +37,8 @@ export default function RechargeBalancePage() {
     if (initialLoad) setBalanceLoading(true); // Spinner only on first load
 
     try {
-      const res = await fetch("/api/wallet/balance", {
-        method: "GET",
-        credentials: "include",
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setWalletBalance(Number(data.wallet_balance ?? 0));
-      } else {
-        console.error("fetchBalance failed:", res.status);
-        setWalletBalance(0);
-      }
+      const data = await apiFetch('/api/wallet/balance', { method: 'GET' });
+      setWalletBalance(Number(data.wallet_balance ?? 0));
     } catch (err) {
       console.error("fetchBalance error:", err);
       setWalletBalance(0);
@@ -58,17 +50,7 @@ export default function RechargeBalancePage() {
   // Fetch History
   async function fetchHistory() {
     try {
-      const res = await fetch("/api/wallet/history", {
-        method: "GET",
-        credentials: "include",
-      });
-
-      if (!res.ok) {
-        console.error("fetchHistory failed:", res.status);
-        return;
-      }
-
-      const data = await res.json();
+      const data = await apiFetch('/api/wallet/history', { method: 'GET' });
       const txs = Array.isArray(data.transactions) ? data.transactions : [];
 
       const parsedTxs = txs.map((tx) => ({
@@ -155,26 +137,7 @@ export default function RechargeBalancePage() {
 
     setSubmitting(true);
     try {
-      const createRes = await fetch("/api/create-razor", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ amount: Number(amount) }),
-      });
-
-      if (!createRes.ok) {
-        const t = await createRes.text();
-        let msg = "Order failed";
-        try {
-          const j = t ? JSON.parse(t) : {};
-          msg = j.message || j.error || msg;
-        } catch (_) {
-          if (t) msg = t;
-        }
-        throw new Error(msg);
-      }
-
-      const order = await createRes.json();
+      const order = await apiFetch('/api/create-razor', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: Number(amount) }) });
       if (!order?.id) throw new Error("No order ID");
 
       await loadRazorpayScript();
@@ -188,36 +151,19 @@ export default function RechargeBalancePage() {
         order_id: order.id,
         handler: async function (response) {
           try {
-            const verifyRes = await fetch("/api/verify-payment", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              credentials: "include",
-              body: JSON.stringify({
-                order_id: response.razorpay_order_id,
-                payment_id: response.razorpay_payment_id,
-                signature: response.razorpay_signature,
-                amount: Number(amount),
-              }),
-            });
+              const verifyData = await apiFetch('/api/verify-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ order_id: response.razorpay_order_id, payment_id: response.razorpay_payment_id, signature: response.razorpay_signature, amount: Number(amount) }) });
 
-            const verifyText = await verifyRes.text();
-            let verifyData = {};
-            try { verifyData = verifyText ? JSON.parse(verifyText) : {}; } catch (_) { verifyData = {}; }
-
-            if (verifyRes.ok && verifyData.success) {
-              await fetchBalance();
-              await fetchHistory();
-              alert(
-                `Wallet updated! New balance: ₹${verifyData.wallet_balance}`,
-              );
-            } else {
-              alert(
-                "Payment failed: " + (verifyData.message || "Unknown error"),
-              );
-            }
+              if (verifyData && verifyData.success) {
+                await fetchBalance();
+                await fetchHistory();
+                alert(`Wallet updated! New balance: ₹${verifyData.wallet_balance}`);
+              } else {
+                alert('Payment failed: ' + (verifyData?.message || 'Unknown error'));
+              }
           } catch (err) {
-            console.error(err);
-            alert("Verification error");
+                console.error(err);
+                const msg = err?.message || 'Verification error';
+                alert(msg);
           } finally {
             setSubmitting(false);
           }
