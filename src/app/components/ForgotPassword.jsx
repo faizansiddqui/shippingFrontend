@@ -1,51 +1,57 @@
-"use client"
-import { useState } from 'react';
-import { API_BASE_URL } from '@/utils/api';
+"use client";
+import { useState } from "react";
+import { API_BASE_URL } from "@/utils/api";
 
 export default function ForgotPassword() {
-  const [email, setEmail] = useState('');
-  const [message, setMessage] = useState('');
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setMessage('');
+    setMessage("");
     setStatus(null);
 
     try {
       const res = await fetch(`${API_BASE_URL}/forgot-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
       const data = await res.json();
       setLoading(false);
       if (!res.ok) {
-        setStatus('failed');
-        setMessage(data.message || data.error || 'Unable to request password reset');
+        setStatus("failed");
+        setMessage(
+          data.message || data.error || "Unable to request password reset",
+        );
         return;
       }
 
-      const respStatus = data.status || (data.success ? 'sent' : null);
+      const respStatus = data.status || (data.success ? "sent" : null);
       setStatus(respStatus);
 
       // Friendly messages by status (don't show raw reset link as primary)
-      let display = data.message || '';
+      let display = data.message || "";
       if (!display) {
-        if (respStatus === 'sent') display = '✅ Reset link sent. Check your email.';
-        else if (respStatus === 'generated') display = '✅ Reset link generated.';
-        else if (respStatus === 'notified' || respStatus === 'not_configured') display = 'If an account exists, a reset link will be sent.';
-        else if (respStatus === 'failed') display = 'Failed to send reset link.';
-        else display = 'If an account exists, a reset link will be sent.';
+        if (respStatus === "sent")
+          display = "✅ Reset link sent. Check your email.";
+        else if (respStatus === "generated")
+          display = "✅ Reset link generated.";
+        else if (respStatus === "notified" || respStatus === "not_configured")
+          display = "If an account exists, a reset link will be sent.";
+        else if (respStatus === "failed")
+          display = "Failed to send reset link.";
+        else display = "If an account exists, a reset link will be sent.";
       }
 
       setMessage(display);
     } catch (err) {
-      console.error('ForgotPassword error', err);
+      console.error("ForgotPassword error", err);
       setLoading(false);
-      setMessage('Unable to send reset email.');
+      setMessage("Unable to send reset email.");
     }
   };
 
@@ -81,14 +87,21 @@ export default function ForgotPassword() {
               disabled={loading}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Sending...' : 'Send Reset Email'}
+              {loading ? "Sending..." : "Send Reset Email"}
             </button>
           </div>
         </form>
         {message && (
-          <div className={`mt-6 text-center text-sm p-3 rounded-md ${
-            (status === 'sent' || status === 'generated' || status === 'notified' || status === 'not_configured') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-          }`}>
+          <div
+            className={`mt-6 text-center text-sm p-3 rounded-md ${
+              status === "sent" ||
+              status === "generated" ||
+              status === "notified" ||
+              status === "not_configured"
+                ? "bg-green-100 text-green-700"
+                : "bg-red-100 text-red-700"
+            }`}
+          >
             {message}
           </div>
         )}

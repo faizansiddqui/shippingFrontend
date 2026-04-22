@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { API_BASE_URL } from '@/utils/api';
+import { API_BASE_URL } from "@/utils/api";
 
 export default function ResetPassword() {
   const router = useRouter();
@@ -10,19 +10,19 @@ export default function ResetPassword() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [canReset, setCanReset] = useState(false);
-  const [token, setToken] = useState('');
+  const [token, setToken] = useState("");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const t = params.get('token');
+    const t = params.get("token");
     if (!t) {
-      setMessage('Invalid or expired reset link');
+      setMessage("Invalid or expired reset link");
       setCanReset(false);
       return;
     }
     setToken(t);
     setCanReset(true);
-    setMessage('✅ You may now reset your password.');
+    setMessage("✅ You may now reset your password.");
   }, []);
 
   const handleSubmit = async (e) => {
@@ -31,22 +31,22 @@ export default function ResetPassword() {
     setMessage("");
     try {
       const res = await fetch(`${API_BASE_URL}/reset-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, password }),
       });
       const data = await res.json();
       setLoading(false);
       if (!res.ok) {
-        setMessage(data.error || data.message || 'Unable to reset password');
+        setMessage(data.error || data.message || "Unable to reset password");
         return;
       }
-      setMessage('✅ Password reset successful! Redirecting to login...');
-      setTimeout(() => router.push('/login'), 2500);
+      setMessage("✅ Password reset successful! Redirecting to login...");
+      setTimeout(() => router.push("/login"), 2500);
     } catch (err) {
-      console.error('ResetPassword submit error', err);
+      console.error("ResetPassword submit error", err);
       setLoading(false);
-      setMessage('Unable to reset password.');
+      setMessage("Unable to reset password.");
     }
   };
 
@@ -62,9 +62,13 @@ export default function ResetPassword() {
           </p>
         </div>
         {message && (
-          <div className={`text-center text-sm p-3 rounded-md ${
-            message.includes('✅') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-          }`}>
+          <div
+            className={`text-center text-sm p-3 rounded-md ${
+              message.includes("✅")
+                ? "bg-green-100 text-green-700"
+                : "bg-red-100 text-red-700"
+            }`}
+          >
             {message}
           </div>
         )}
