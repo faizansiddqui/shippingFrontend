@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "../../../lib/supabaseClient";
+import { API_BASE_URL } from '@/utils/api';
 
 export default function ResetPassword() {
   const router = useRouter();
@@ -10,50 +10,43 @@ export default function ResetPassword() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [canReset, setCanReset] = useState(false);
+  const [token, setToken] = useState('');
 
   useEffect(() => {
-    const hash = window.location.hash;
-
-    if (hash.includes("error=")) {
-      const errorDescription = decodeURIComponent(
-        hash.split("error_description=")[1] || ""
-      );
-      setMessage(errorDescription || "Invalid or expired link.");
+    const params = new URLSearchParams(window.location.search);
+    const t = params.get('token');
+    if (!t) {
+      setMessage('Invalid or expired reset link');
+      setCanReset(false);
       return;
     }
-
-    if (!hash.includes("access_token")) {
-      setMessage("Invalid or expired reset link");
-      return;
-    }
-
-    const access_token = hash.split("access_token=")[1]?.split("&")[0];
-    const refresh_token = hash.split("refresh_token=")[1]?.split("&")[0];
-
-    supabase.auth.setSession({ access_token, refresh_token }).then(({ error }) => {
-      if (error) {
-        console.error("Session error:", error);
-        setMessage(error.message);
-      } else {
-        setCanReset(true);
-        setMessage("✅ You may now reset your password.");
-      }
-    });
+    setToken(t);
+    setCanReset(true);
+    setMessage('✅ You may now reset your password.');
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
-
-    const { error } = await supabase.auth.updateUser({ password });
-    setLoading(false);
-
-    if (error) {
-      setMessage(error.message);
-    } else {
-      setMessage("✅ Password reset successful! Redirecting to login...");
-      setTimeout(() => router.push("/login"), 2500);
+    try {
+      const res = await fetch(`${API_BASE_URL}/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, password }),
+      });
+      const data = await res.json();
+      setLoading(false);
+      if (!res.ok) {
+        setMessage(data.error || data.message || 'Unable to reset password');
+        return;
+      }
+      setMessage('✅ Password reset successful! Redirecting to login...');
+      setTimeout(() => router.push('/login'), 2500);
+    } catch (err) {
+      console.error('ResetPassword submit error', err);
+      setLoading(false);
+      setMessage('Unable to reset password.');
     }
   };
 

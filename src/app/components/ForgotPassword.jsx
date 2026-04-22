@@ -1,26 +1,51 @@
 "use client"
 import { useState } from 'react';
-import { supabase } from '../../../lib/supabaseClient';
+import { API_BASE_URL } from '@/utils/api';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage('');
+    setStatus(null);
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`, // Redirect after email click
-    });
+    try {
+      const res = await fetch(`${API_BASE_URL}/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      setLoading(false);
+      if (!res.ok) {
+        setStatus('failed');
+        setMessage(data.message || data.error || 'Unable to request password reset');
+        return;
+      }
 
-    setLoading(false);
-    if (error) {
-      setMessage(error.message);
-    } else {
-      setMessage('Check your email for the password reset link!');
+      const respStatus = data.status || (data.success ? 'sent' : null);
+      setStatus(respStatus);
+
+      // Friendly messages by status (don't show raw reset link as primary)
+      let display = data.message || '';
+      if (!display) {
+        if (respStatus === 'sent') display = '✅ Reset link sent. Check your email.';
+        else if (respStatus === 'generated') display = '✅ Reset link generated.';
+        else if (respStatus === 'notified' || respStatus === 'not_configured') display = 'If an account exists, a reset link will be sent.';
+        else if (respStatus === 'failed') display = 'Failed to send reset link.';
+        else display = 'If an account exists, a reset link will be sent.';
+      }
+
+      setMessage(display);
+    } catch (err) {
+      console.error('ForgotPassword error', err);
+      setLoading(false);
+      setMessage('Unable to send reset email.');
     }
   };
 
@@ -62,7 +87,7 @@ export default function ForgotPassword() {
         </form>
         {message && (
           <div className={`mt-6 text-center text-sm p-3 rounded-md ${
-            message.includes('Check') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+            (status === 'sent' || status === 'generated' || status === 'notified' || status === 'not_configured') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
           }`}>
             {message}
           </div>

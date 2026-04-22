@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../../utils/checkAuth";
-import { apiFetch, ApiError } from '@/utils/apiClient';
+import { apiFetch, ApiError } from "@/utils/apiClient";
 import { useRouter } from "next/navigation";
 import { ArrowDown, ArrowUp, DownArrow, RefreshCw } from "lucide-react"; // Import the down arrow icon
 
@@ -37,7 +37,7 @@ export default function RechargeBalancePage() {
     if (initialLoad) setBalanceLoading(true); // Spinner only on first load
 
     try {
-      const data = await apiFetch('/api/wallet/balance', { method: 'GET' });
+      const data = await apiFetch("/api/wallet/balance", { method: "GET" });
       setWalletBalance(Number(data.wallet_balance ?? 0));
     } catch (err) {
       console.error("fetchBalance error:", err);
@@ -50,7 +50,7 @@ export default function RechargeBalancePage() {
   // Fetch History
   async function fetchHistory() {
     try {
-      const data = await apiFetch('/api/wallet/history', { method: 'GET' });
+      const data = await apiFetch("/api/wallet/history", { method: "GET" });
       const txs = Array.isArray(data.transactions) ? data.transactions : [];
 
       const parsedTxs = txs.map((tx) => ({
@@ -137,7 +137,11 @@ export default function RechargeBalancePage() {
 
     setSubmitting(true);
     try {
-      const order = await apiFetch('/api/create-razor', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: Number(amount) }) });
+      const order = await apiFetch("/api/create-razor", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: Number(amount) }),
+      });
       if (!order?.id) throw new Error("No order ID");
 
       await loadRazorpayScript();
@@ -151,19 +155,32 @@ export default function RechargeBalancePage() {
         order_id: order.id,
         handler: async function (response) {
           try {
-              const verifyData = await apiFetch('/api/verify-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ order_id: response.razorpay_order_id, payment_id: response.razorpay_payment_id, signature: response.razorpay_signature, amount: Number(amount) }) });
+            const verifyData = await apiFetch("/api/verify-payment", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                order_id: response.razorpay_order_id,
+                payment_id: response.razorpay_payment_id,
+                signature: response.razorpay_signature,
+                amount: Number(amount),
+              }),
+            });
 
-              if (verifyData && verifyData.success) {
-                await fetchBalance();
-                await fetchHistory();
-                alert(`Wallet updated! New balance: ₹${verifyData.wallet_balance}`);
-              } else {
-                alert('Payment failed: ' + (verifyData?.message || 'Unknown error'));
-              }
+            if (verifyData && verifyData.success) {
+              await fetchBalance();
+              await fetchHistory();
+              alert(
+                `Wallet updated! New balance: ₹${verifyData.wallet_balance}`,
+              );
+            } else {
+              alert(
+                "Payment failed: " + (verifyData?.message || "Unknown error"),
+              );
+            }
           } catch (err) {
-                console.error(err);
-                const msg = err?.message || 'Verification error';
-                alert(msg);
+            console.error(err);
+            const msg = err?.message || "Verification error";
+            alert(msg);
           } finally {
             setSubmitting(false);
           }
@@ -246,7 +263,7 @@ export default function RechargeBalancePage() {
                 onClick={handleManualRefresh}
                 className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 cursor-pointer transition-colors disabled:opacity-50"
               >
-                <RefreshCw size={20}/>
+                <RefreshCw size={20} />
                 Refresh
               </button>
               <div
