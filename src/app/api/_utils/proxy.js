@@ -37,12 +37,14 @@ export async function forward(req, path, init = {}) {
     const host = requestHeaders.get('host') || '';
     const cookies = setCookie.split(/,(?=[^;]+=[^;]+)/); // split multiple set-cookies safely
     const rewritten = cookies.map((c) => {
-      let v = c.replace(/Domain=[^;]+/i, host ? `Domain=${host}` : ''); // rewrite domain to current host
+      // Remove any Domain attribute so the browser uses the current host
+      let v = c.replace(/;?\s*Domain=[^;]+/i, '');
+      // For local dev, strip Secure and relax SameSite to Lax so cookies work over http
       if (host.includes('localhost')) {
         v = v.replace(/; *Secure/gi, ''); // allow http local dev
         v = v.replace(/SameSite=None/gi, 'SameSite=Lax'); // avoid rejection on http
       }
-      return v;
+      return v.trim();
     });
     // For multiple cookies, append rather than merge
     rewritten.forEach((cookie) => responseHeaders.append('set-cookie', cookie));
