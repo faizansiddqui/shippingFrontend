@@ -1,4 +1,4 @@
-import { forward } from '../_utils/proxy';
+import { forward } from '../../_utils/proxy';
 
 export async function POST(request) {
     // Forward logout POST to backend /logout
