@@ -50,9 +50,9 @@ export function useAuth(redirectOnUnauth = true) {
         return true;
       }
 
-      // 🔄 Try refresh token if unauthorized
+      // 🔄 Try refresh token if unauthorized (use proxy /refresh)
       if (res.status === 401) {
-        const refreshRes = await fetch(`/api/profile/refresh`, {
+        const refreshRes = await fetch(`${API_BASE_URL}/refresh`, {
           method: "POST",
           credentials: "include",
         });

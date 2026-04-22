@@ -1,5 +1,6 @@
 import { forward } from '../../_utils/proxy';
 
 export async function POST(request) {
-  return forward(request, '/profile/refresh', { method: 'POST' });
+  // backend exposes a top-level /refresh route
+  return forward(request, '/refresh', { method: 'POST' });
 }
