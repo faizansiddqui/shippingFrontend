@@ -57,18 +57,15 @@ export default function DashboardLayout({ children }) {
             >
               <Menu className="w-6 h-6" />
             </button>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Dashboard
-            </h1>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-1">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
-                <User className="w-5 h-5 text-white" />
+                <User className="w-4 h-4 text-white" />
               </div>
               <div className="flex flex-col">
-                <span className="text-sm text-gray-500">Signed in as</span>
+                {/* <span className="text-sm text-gray-500">Signed in as</span> */}
                 <span className="text-gray-800 font-medium">
                   {user?.name
                     ? user.name
@@ -87,7 +84,7 @@ export default function DashboardLayout({ children }) {
                 className="ml-3 inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-blue-600 text-white px-4 py-2 rounded-lg shadow hover:scale-105 transition-transform"
               >
                 <Package className="w-4 h-4" />
-                Add Parcel
+                Parcel
               </button>
             </div>
           </div>

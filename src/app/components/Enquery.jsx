@@ -252,7 +252,7 @@ export default function Inquiry() {
   };
 
   return (
-    <div className="min-h-screen text-black bg-gradient-to-br from-purple-50 to-blue-50 flex justify-center p-4 sm:p-8 pt-20">
+    <div className="min-h-screen text-black bg-gradient-to-br from-purple-50 to-blue-50 flex justify-center px-1 p-4 sm:p-8">
       <div className="flex flex-col lg:flex-row gap-6 max-w-6xl w-full">
         {/* Left Form Section */}
         <div className=" p-6 sm:p-8 flex-1 border border-purple-100/50">

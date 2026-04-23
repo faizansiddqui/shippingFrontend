@@ -54,7 +54,7 @@ export default function Sidebar({ isOpen, onClose }) {
     <>
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-40 w-60 bg-white border-r border-gray-200 shadow-xl transition-transform duration-300 ease-in-out ${
+        className={`fixed inset-y-0 left-0 z-40 w-70 bg-white border-r border-gray-200 shadow-xl transition-transform duration-300 ease-in-out ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         } md:translate-x-0 md:static md:shadow-lg`}
       >
@@ -69,7 +69,7 @@ export default function Sidebar({ isOpen, onClose }) {
                 height={40}
                 className="rounded-full shadow-md"
               />
-              <span className="hidden text-xl font-bold text-gray-800 sm:block">
+              <span className="text-xl font-bold text-gray-800">
                 MS-Logistic
               </span>
             </Link>
