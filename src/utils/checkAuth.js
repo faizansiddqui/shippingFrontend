@@ -18,7 +18,7 @@ export function useAuth(redirectOnUnauth = true) {
 
     if (!redirectOnUnauth || typeof window === "undefined") return;
 
-    const { pathname, hash } = window.location;
+    const { pathname, search, hash } = window.location;
 
     // Allow password reset flow
     if (pathname.startsWith("/reset-password") || hash.includes("access_token")) {
@@ -26,7 +26,9 @@ export function useAuth(redirectOnUnauth = true) {
       return;
     }
 
-    router.push("/login");
+    // Preserve current location so user can return after login
+    const next = encodeURIComponent(`${pathname}${search || ""}${hash || ""}`);
+    router.push(`/login?next=${next}`);
   }, [redirectOnUnauth, router]);
 
   // ✅ Auth check (with duplicate call prevention)

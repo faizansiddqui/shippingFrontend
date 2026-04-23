@@ -1,13 +1,22 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import { API_BASE_URL } from "@/utils/api";
-import { Package, Clock, MapPin, CheckCircle, TrendingUp, ShoppingCart, Archive, IndianRupee } from "lucide-react";
+import {
+  Package,
+  Clock,
+  MapPin,
+  CheckCircle,
+  TrendingUp,
+  ShoppingCart,
+  Archive,
+  IndianRupee,
+} from "lucide-react";
 import Link from "next/link";
-import { useAuth } from '../../utils/checkAuth'; // Adjust path as needed
+import { useAuth } from "../../utils/checkAuth"; // Adjust path as needed
 
 export default function DashboardPage() {
-  const { user, loading } = useAuth();
+  const { user, loading } = useAuth(false);
   const [orders, setOrders] = useState([]);
   const [stats, setStats] = useState([]);
 
@@ -16,15 +25,15 @@ export default function DashboardPage() {
     if (!user) return;
     try {
       const res = await fetch(`${API_BASE_URL}/user-orders`, {
-        method: 'GET',
-        credentials: 'include',
+        method: "GET",
+        credentials: "include",
       });
       const data = await res.json();
       if (res.ok && data.status) {
         setOrders(data.data || []);
       }
     } catch (err) {
-      console.error('Failed to fetch orders:', err);
+      console.error("Failed to fetch orders:", err);
     }
   };
 
@@ -47,54 +56,54 @@ export default function DashboardPage() {
 
     let totalRevenue = 0;
 
-    orders.forEach(order => {
-      if (order.status === 'ACCEPTED') statusCounts.ACCEPTED++;
-      if (order.status === 'PENDING') statusCounts.PENDING++;
-      if (order.status === 'ON_WAY') statusCounts.ON_WAY++;
-      if (order.status === 'DELIVERED') statusCounts.DELIVERED++;
+    orders.forEach((order) => {
+      if (order.status === "ACCEPTED") statusCounts.ACCEPTED++;
+      if (order.status === "PENDING") statusCounts.PENDING++;
+      if (order.status === "ON_WAY") statusCounts.ON_WAY++;
+      if (order.status === "DELIVERED") statusCounts.DELIVERED++;
       totalRevenue += Number(order.totalOrderValue || 0);
     });
 
     // Hardcoded percentage changes (in real app, compute from historical data)
     const percentageChanges = {
-      ACCEPTED: '+12%',
-      PENDING: '+5%',
-      ON_WAY: '+18%',
-      DELIVERED: '-2%',
+      ACCEPTED: "+12%",
+      PENDING: "+5%",
+      ON_WAY: "+18%",
+      DELIVERED: "-2%",
     };
 
     setStats([
-      { 
-        name: "Accepted Orders", 
-        value: statusCounts.ACCEPTED.toLocaleString(), 
-        change: percentageChanges.ACCEPTED, 
-        icon: Package, 
+      {
+        name: "Accepted Orders",
+        value: statusCounts.ACCEPTED.toLocaleString(),
+        change: percentageChanges.ACCEPTED,
+        icon: Package,
         color: "from-blue-500 to-blue-600",
-        bgColor: "bg-blue-100 text-blue-800"
+        bgColor: "bg-blue-100 text-blue-800",
       },
-      { 
-        name: "Pending Orders", 
-        value: statusCounts.PENDING.toLocaleString(), 
-        change: percentageChanges.PENDING, 
-        icon: Clock, 
+      {
+        name: "Pending Orders",
+        value: statusCounts.PENDING.toLocaleString(),
+        change: percentageChanges.PENDING,
+        icon: Clock,
         color: "from-yellow-500 to-yellow-600",
-        bgColor: "bg-yellow-100 text-yellow-800"
+        bgColor: "bg-yellow-100 text-yellow-800",
       },
-      { 
-        name: "On Way Orders", 
-        value: statusCounts.ON_WAY.toLocaleString(), 
-        change: percentageChanges.ON_WAY, 
-        icon: MapPin, 
+      {
+        name: "On Way Orders",
+        value: statusCounts.ON_WAY.toLocaleString(),
+        change: percentageChanges.ON_WAY,
+        icon: MapPin,
         color: "from-purple-500 to-purple-600",
-        bgColor: "bg-purple-100 text-purple-800"
+        bgColor: "bg-purple-100 text-purple-800",
       },
-      { 
-        name: "Delivered Orders", 
-        value: statusCounts.DELIVERED.toLocaleString(), 
-        change: percentageChanges.DELIVERED, 
-        icon: CheckCircle, 
+      {
+        name: "Delivered Orders",
+        value: statusCounts.DELIVERED.toLocaleString(),
+        change: percentageChanges.DELIVERED,
+        icon: CheckCircle,
         color: "from-green-500 to-green-600",
-        bgColor: "bg-green-100 text-green-800"
+        bgColor: "bg-green-100 text-green-800",
       },
     ]);
   }, [orders]);
@@ -103,7 +112,7 @@ export default function DashboardPage() {
   const recentOrders = orders
     .sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate))
     .slice(0, 3)
-    .map(order => ({
+    .map((order) => ({
       id: `#ORD-${order.orderId}`,
       status: order.status,
       date: new Date(order.orderDate).toLocaleDateString(),
@@ -127,7 +136,9 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {stats.map((stat) => {
           const Icon = stat.icon;
-          const changeColor = stat.change.startsWith('+') ? 'text-green-600' : 'text-red-600';
+          const changeColor = stat.change.startsWith("+")
+            ? "text-green-600"
+            : "text-red-600";
           return (
             <div
               key={stat.name}
@@ -135,9 +146,15 @@ export default function DashboardPage() {
             >
               <div className="flex items-center justify-between">
                 <div className="space-y-2">
-                  <p className="text-xs sm:text-sm font-medium text-gray-600">{stat.name}</p>
-                  <p className="text-xl sm:text-2xl font-bold text-gray-900">{stat.value}</p>
-                  <p className={`text-xs sm:text-sm ${changeColor} font-medium`}>
+                  <p className="text-xs sm:text-sm font-medium text-gray-600">
+                    {stat.name}
+                  </p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900">
+                    {stat.value}
+                  </p>
+                  <p
+                    className={`text-xs sm:text-sm ${changeColor} font-medium`}
+                  >
                     {stat.change} from last month
                   </p>
                 </div>
@@ -169,14 +186,27 @@ export default function DashboardPage() {
                   REJECTED: "bg-red-100 text-red-800",
                   RTO: "bg-orange-100 text-orange-800",
                 };
-                const bgColor = statusMap[order.status] || "bg-gray-100 text-gray-800";
+                const bgColor =
+                  statusMap[order.status] || "bg-gray-100 text-gray-800";
                 return (
-                  <div key={order.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                  <div
+                    key={order.id}
+                    className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
+                  >
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium text-gray-900 truncate" title={order.id}>{order.id}</p>
-                      <p className="text-xs sm:text-sm text-gray-500">{order.date}</p>
+                      <p
+                        className="font-medium text-gray-900 truncate"
+                        title={order.id}
+                      >
+                        {order.id}
+                      </p>
+                      <p className="text-xs sm:text-sm text-gray-500">
+                        {order.date}
+                      </p>
                     </div>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${bgColor}`}>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${bgColor}`}
+                    >
                       {order.status}
                     </span>
                   </div>
@@ -191,12 +221,26 @@ export default function DashboardPage() {
         </div>
 
         <div className="bg-white rounded-xl shadow-md p-4 sm:p-6">
-          <h2 className="text-base sm:text-lg font-semibold mb-4">Quick Actions</h2>
+          <h2 className="text-base sm:text-lg font-semibold mb-4">
+            Quick Actions
+          </h2>
           <div className="space-y-3">
             {[
-              { label: "Add New Order", href: "/dashboard/add-new-order", icon: ShoppingCart },
-              { label: "View My Orders", href: "/dashboard/my-orders", icon: Archive },
-              { label: "Recharge Balance", href: "/dashboard/recharge-balance", icon: IndianRupee },
+              {
+                label: "Add New Order",
+                href: "/dashboard/add-new-order",
+                icon: ShoppingCart,
+              },
+              {
+                label: "View My Orders",
+                href: "/dashboard/my-orders",
+                icon: Archive,
+              },
+              {
+                label: "Recharge Balance",
+                href: "/dashboard/recharge-balance",
+                icon: IndianRupee,
+              },
             ].map((action) => {
               const Icon = action.icon;
               return (
@@ -206,7 +250,9 @@ export default function DashboardPage() {
                   className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors text-sm"
                 >
                   <Icon className="w-4 h-4 sm:w-5 sm:h-5 mr-3 text-gray-600 flex-shrink-0" />
-                  <span className="font-medium text-gray-700">{action.label}</span>
+                  <span className="font-medium text-gray-700">
+                    {action.label}
+                  </span>
                 </Link>
               );
             })}

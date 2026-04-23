@@ -2,12 +2,13 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../../utils/checkAuth";
 import { apiFetch, ApiError } from "@/utils/apiClient";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { ArrowDown, ArrowUp, DownArrow, RefreshCw } from "lucide-react"; // Import the down arrow icon
 
 export default function RechargeBalancePage() {
-  const { user, loading } = useAuth();
+  const { user, loading } = useAuth(false);
   const router = useRouter();
+  const pathname = usePathname();
 
   const [amount, setAmount] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -133,7 +134,12 @@ export default function RechargeBalancePage() {
   const handlePayment = async (e) => {
     e.preventDefault();
     if (!amount || Number(amount) <= 0) return alert("Enter valid amount");
-    if (!user) return router.push("/login");
+    if (!user) {
+      const next = encodeURIComponent(
+        pathname || "/dashboard/recharge-balance",
+      );
+      return router.push(`/login?next=${next}`);
+    }
 
     setSubmitting(true);
     try {
@@ -223,7 +229,8 @@ export default function RechargeBalancePage() {
   }
 
   if (!user) {
-    router.push("/login");
+    const next = encodeURIComponent(pathname || "/dashboard/recharge-balance");
+    router.push(`/login?next=${next}`);
     return null;
   }
 

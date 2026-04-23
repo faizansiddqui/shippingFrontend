@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
-import { Bell, Menu, User } from "lucide-react";
+import { Bell, Menu, User, Package } from "lucide-react";
 import { useAuth } from "../../utils/checkAuth"; // Adjust path
 import { useRouter } from "next/navigation";
 
 export default function DashboardLayout({ children }) {
-  const { user, loading } = useAuth();
+  const { user, loading } = useAuth(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const router = useRouter();
 
@@ -16,7 +16,9 @@ export default function DashboardLayout({ children }) {
   // ✅ Handle redirect safely after render
   useEffect(() => {
     if (!loading && !user) {
-      router.push("/log");
+      // Redirect to login with return URL
+      const next = encodeURIComponent("/dashboard");
+      router.push(`/login?next=${next}`);
     }
   }, [loading, user, router]);
 
@@ -59,21 +61,34 @@ export default function DashboardLayout({ children }) {
               Dashboard
             </h1>
           </div>
-          <div className="flex items-center space-x-4">
-          
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
-                <User className="w-4 h-4 text-white" />
-              </div>
-              <span className="hidden md:block text-gray-700 font-medium">
-                Welcome,{" "}
-                {user?.name
-                  ? user.name
-                  : user?.email
-                    ? user.email.split("@")[0]  // sirf '@' se pehle wala part show karega
-                    : "User"}
-              </span>
 
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                <User className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm text-gray-500">Signed in as</span>
+                <span className="text-gray-800 font-medium">
+                  {user?.name
+                    ? user.name
+                    : user?.email
+                      ? user.email.split("@")[0]
+                      : "User"}
+                </span>
+              </div>
+            </div>
+
+            <div>
+              <button
+                onClick={() =>
+                  (window.location.href = "/dashboard/add-new-order")
+                }
+                className="ml-3 inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-blue-600 text-white px-4 py-2 rounded-lg shadow hover:scale-105 transition-transform"
+              >
+                <Package className="w-4 h-4" />
+                Add Parcel
+              </button>
             </div>
           </div>
         </header>

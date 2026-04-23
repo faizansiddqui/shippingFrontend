@@ -18,7 +18,7 @@ export default function TrustedBy() {
   ];
 
   return (
-    <div className="mt-24 mb-40 bg-white flex items-center justify-center p-6">
+    <div className="bg-white flex items-center justify-center p-6">
       <div className="w-full max-w-6xl bg-white p-6 rounded-lg ">
         <p className="text-center text-gray-600 mb-10 text-2xl">
           40+ businesses actively handling hassle-free and cost-effective shipments with Shipneer.

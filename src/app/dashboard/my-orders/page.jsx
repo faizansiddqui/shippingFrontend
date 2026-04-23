@@ -18,7 +18,7 @@ import { useWallet } from "@/context/WalletContext";
 import { API_BASE_URL } from "@/utils/api";
 
 const OnlyMyOrder = () => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth(false);
   const { walletBalance, setWalletBalance } = useWallet();
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
@@ -184,7 +184,8 @@ const OnlyMyOrder = () => {
     return String(orderId).trim();
   };
 
-  const getOrderIdForApi = (orderId) => encodeURIComponent(normalizeOrderId(orderId));
+  const getOrderIdForApi = (orderId) =>
+    encodeURIComponent(normalizeOrderId(orderId));
 
   const getShipmentId = (orderId) => {
     const normalized = normalizeOrderId(orderId);
@@ -219,10 +220,10 @@ const OnlyMyOrder = () => {
     const res = await fetch(
       `${API_BASE_URL}/orders/${getOrderIdForApi(normalizedId)}/update-status`,
       {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ status }),
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ status }),
       },
     );
     const data = await res.json();
@@ -236,8 +237,16 @@ const OnlyMyOrder = () => {
     try {
       if (!orderId) throw new Error("Order ID missing");
       await updateOrderStatus(orderId, "ACCEPTED");
-      setOrders((prev) => prev.map((o) => (o.orderId === orderId ? { ...o, status: "ACCEPTED" } : o)));
-      setFilteredOrders((prev) => prev.map((o) => (o.orderId === orderId ? { ...o, status: "ACCEPTED" } : o)));
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.orderId === orderId ? { ...o, status: "ACCEPTED" } : o,
+        ),
+      );
+      setFilteredOrders((prev) =>
+        prev.map((o) =>
+          o.orderId === orderId ? { ...o, status: "ACCEPTED" } : o,
+        ),
+      );
     } catch (err) {
       alert(err.message || "Failed to approve order");
     }
@@ -247,8 +256,16 @@ const OnlyMyOrder = () => {
     try {
       if (!orderId) throw new Error("Order ID missing");
       await updateOrderStatus(orderId, "REJECTED");
-      setOrders((prev) => prev.map((o) => (o.orderId === orderId ? { ...o, status: "REJECTED" } : o)));
-      setFilteredOrders((prev) => prev.map((o) => (o.orderId === orderId ? { ...o, status: "REJECTED" } : o)));
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.orderId === orderId ? { ...o, status: "REJECTED" } : o,
+        ),
+      );
+      setFilteredOrders((prev) =>
+        prev.map((o) =>
+          o.orderId === orderId ? { ...o, status: "REJECTED" } : o,
+        ),
+      );
     } catch (err) {
       alert(err.message || "Failed to cancel order");
     }
@@ -275,10 +292,14 @@ const OnlyMyOrder = () => {
       .filter(Boolean);
     if (successIds.length > 0) {
       setOrders((prev) =>
-        prev.map((o) => (successIds.includes(o.orderId) ? { ...o, status } : o)),
+        prev.map((o) =>
+          successIds.includes(o.orderId) ? { ...o, status } : o,
+        ),
       );
       setFilteredOrders((prev) =>
-        prev.map((o) => (successIds.includes(o.orderId) ? { ...o, status } : o)),
+        prev.map((o) =>
+          successIds.includes(o.orderId) ? { ...o, status } : o,
+        ),
       );
     }
     const failed = results.filter((r) => r.status === "rejected");
@@ -702,8 +723,11 @@ const OnlyMyOrder = () => {
               friendly =
                 "Insufficient wallet balance. Please recharge and try again.";
             } else if (lower.includes("courier_code is required")) {
-              friendly = "Courier selection is missing. Please re-select courier.";
-            } else if (lower.includes("only accepted orders can be scheduled")) {
+              friendly =
+                "Courier selection is missing. Please re-select courier.";
+            } else if (
+              lower.includes("only accepted orders can be scheduled")
+            ) {
               friendly = "Only accepted orders can be scheduled.";
             } else if (lower.includes("failed to fetch order info")) {
               friendly =
@@ -712,8 +736,7 @@ const OnlyMyOrder = () => {
               friendly =
                 "AWB could not be assigned. Please try again later or contact support.";
             } else if (lower.includes("failed to schedule pickup")) {
-              friendly =
-                "Pickup scheduling failed. Please try again later.";
+              friendly = "Pickup scheduling failed. Please try again later.";
             }
             throw new Error(friendly);
           }
@@ -781,7 +804,9 @@ const OnlyMyOrder = () => {
       const failed = results.filter((r) => r.status === "rejected");
       if (failed.length > 0) {
         const firstError = failed[0]?.reason?.message;
-        setShippingError(firstError || `${failed.length} orders failed to schedule`);
+        setShippingError(
+          firstError || `${failed.length} orders failed to schedule`,
+        );
       } else {
         closeShippingModal();
       }
@@ -867,7 +892,11 @@ const OnlyMyOrder = () => {
             <button
               onClick={() => handleBulkStatus("ACCEPTED")}
               className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 disabled:opacity-60"
-              disabled={selectedOrderIds.size === 0 || bulkStatusLoading || hasNonPendingSelection}
+              disabled={
+                selectedOrderIds.size === 0 ||
+                bulkStatusLoading ||
+                hasNonPendingSelection
+              }
               title="Approve Selected"
             >
               Approve Selected
@@ -875,7 +904,11 @@ const OnlyMyOrder = () => {
             <button
               onClick={() => handleBulkStatus("REJECTED")}
               className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-60"
-              disabled={selectedOrderIds.size === 0 || bulkStatusLoading || hasNonPendingSelection}
+              disabled={
+                selectedOrderIds.size === 0 ||
+                bulkStatusLoading ||
+                hasNonPendingSelection
+              }
               title="Cancel Selected (PENDING only)"
             >
               Cancel Selected
@@ -883,7 +916,11 @@ const OnlyMyOrder = () => {
             <button
               onClick={handleBulkSchedule}
               className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-60"
-              disabled={selectedOrderIds.size === 0 || bulkScheduleLoading || hasScheduledSelection}
+              disabled={
+                selectedOrderIds.size === 0 ||
+                bulkScheduleLoading ||
+                hasScheduledSelection
+              }
               title="Schedule Selected (unscheduled only)"
             >
               Schedule Selected
@@ -996,7 +1033,9 @@ const OnlyMyOrder = () => {
                     type="checkbox"
                     checked={
                       paginatedOrders.length > 0 &&
-                      paginatedOrders.every((o) => selectedOrderIds.has(o.orderId))
+                      paginatedOrders.every((o) =>
+                        selectedOrderIds.has(o.orderId),
+                      )
                     }
                     onChange={toggleSelectAllVisible}
                   />
@@ -1122,24 +1161,26 @@ const OnlyMyOrder = () => {
                     </td>
                     <td className="p-3 text-sm">
                       <div className="flex gap-2">
-                        {order.status === "PENDING" && !order.selectedCourierName && (
-                          <button
-                            onClick={() => handleApproveOne(order.orderId)}
-                            className="text-emerald-600 hover:text-emerald-800 p-1"
-                            title="Approve Order"
-                          >
-                            Approve
-                          </button>
-                        )}
-                        {order.status === "PENDING" && !order.selectedCourierName && (
-                          <button
-                            onClick={() => handleCancelOne(order.orderId)}
-                            className="text-red-500 hover:text-red-700 p-1"
-                            title="Cancel Order"
-                          >
-                            <X size={16} />
-                          </button>
-                        )}
+                        {order.status === "PENDING" &&
+                          !order.selectedCourierName && (
+                            <button
+                              onClick={() => handleApproveOne(order.orderId)}
+                              className="text-emerald-600 hover:text-emerald-800 p-1"
+                              title="Approve Order"
+                            >
+                              Approve
+                            </button>
+                          )}
+                        {order.status === "PENDING" &&
+                          !order.selectedCourierName && (
+                            <button
+                              onClick={() => handleCancelOne(order.orderId)}
+                              className="text-red-500 hover:text-red-700 p-1"
+                              title="Cancel Order"
+                            >
+                              <X size={16} />
+                            </button>
+                          )}
                         <button
                           onClick={() => handleViewDetails(order)}
                           className="text-blue-500 hover:text-blue-700 p-1"
@@ -1494,7 +1535,9 @@ const OnlyMyOrder = () => {
                     onClick={() => handleScheduleOrder(shippingModalOrder)}
                     className="mt-4 w-full bg-emerald-600 text-white py-2 rounded-lg hover:bg-emerald-700"
                     disabled={
-                      shippingLoading || !shippingPaymentMethod || hasInsufficientBalance
+                      shippingLoading ||
+                      !shippingPaymentMethod ||
+                      hasInsufficientBalance
                     }
                   >
                     Schedule Order
