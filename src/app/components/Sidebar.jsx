@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-  import {
+import { useAuth } from "../../utils/checkAuth";
+import {
   Home,
   Truck,
   ShoppingCart,
@@ -20,23 +21,14 @@ import Image from "next/image";
 export default function Sidebar({ isOpen, onClose }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { logout } = useAuth(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
-      const res = await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
-      });
-
-      if (res.ok) {
-        // Force full page reload to clear any client state
-        window.location.href = '/login';
-      } else {
-        throw new Error('Logout failed');
-      }
+      await logout();
     } catch (err) {
       console.error('Logout error:', err);
       // Even on error, redirect to login

@@ -5,8 +5,7 @@ import Footer from "./components/Footer";
 import Navbar from "./components/Navbar";
 import { usePathname } from "next/navigation";
 import { WalletProvider } from "@/context/WalletContext";
-
-
+import { AuthProvider } from "@/context/AuthContext";
 
 export default function RootLayout({ children }) {
   const pathname = usePathname();
@@ -18,9 +17,11 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body>
         {!isDashboard && <Navbar />}
-        <WalletProvider>
-          {children}
-        </WalletProvider>
+        <AuthProvider>
+          <WalletProvider>
+            {children}
+          </WalletProvider>
+        </AuthProvider>
         {!isDashboard && <Footer />}
       </body>
     </html>

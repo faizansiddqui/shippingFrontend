@@ -16,6 +16,10 @@ const Login = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextParam = (searchParams && searchParams.get("next")) || "/";
+  const reasonParam = (searchParams && searchParams.get("reason")) || "";
+  
+  // Show session expiry message if redirected due to session expiry
+  const sessionExpired = reasonParam === "session";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -93,6 +97,12 @@ const Login = () => {
           <p className="mt-2 text-center text-sm text-gray-600">
             Welcome back! Please enter your details.
           </p>
+          
+          {sessionExpired && (
+            <div className="mt-4 bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg text-sm text-center">
+              Your session has expired due to inactivity. Please sign in again to continue.
+            </div>
+          )}
         </div>
         <form
           onSubmit={handleSubmit}
