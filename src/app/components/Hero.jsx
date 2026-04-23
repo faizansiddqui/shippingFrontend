@@ -5,8 +5,11 @@ import { Menu, X, Package, TrendingUp, Users, Star } from 'lucide-react';
 import Image from 'next/image';
 import Navbar from './Navbar';
 import Link from 'next/link';
+import { useAuth } from '@/utils/checkAuth';
 
 export default function Home() {
+
+  const { user } = useAuth(false);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
@@ -33,11 +36,19 @@ export default function Home() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <Link href={'/signup'}>
-                <button className="w-full cursor-pointer sm:w-auto bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
-                  Register Now
-                </button>
-              </Link>
+              {user ? (
+                <Link href={'/rate-calculator'}>
+                  <button className="w-full cursor-pointer sm:w-auto bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
+                    Rate Calculator
+                  </button>
+                </Link>
+              ) : (
+                <Link href={'/signup'}>
+                  <button className="w-full cursor-pointer sm:w-auto bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
+                    Register Now
+                  </button>
+                </Link>
+              )}
 
               <Link href={'/dashboard'}>
                 <button className="w-full cursor-pointer sm:w-auto border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300">

@@ -59,9 +59,9 @@ export default function DashboardLayout({ children }) {
             </button>
           </div>
 
-          <div className="flex items-center space-x-1">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+          <div className="flex items-center justify-between space-x-1">
+            <div className="flex items-center space-x-1">
+              <div className="w-7 h-7 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
                 <User className="w-4 h-4 text-white" />
               </div>
               <div className="flex flex-col">
@@ -81,7 +81,7 @@ export default function DashboardLayout({ children }) {
                 onClick={() =>
                   (window.location.href = "/dashboard/add-new-order")
                 }
-                className="ml-3 inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-blue-600 text-white px-4 py-2 rounded-lg shadow hover:scale-105 transition-transform"
+                className="ml-3 inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-blue-600 text-white px-2 py-1 rounded-lg shadow hover:scale-105 transition-transform"
               >
                 <Package className="w-4 h-4" />
                 Parcel

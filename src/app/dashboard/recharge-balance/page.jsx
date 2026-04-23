@@ -263,7 +263,7 @@ export default function RechargeBalancePage() {
                   <span className="ml-2 animate-spin inline-block w-4 h-4 border-b-2 border-purple-600 rounded-full"></span>
                 )}
               </p>
-              <p className="text-xs text-gray-500 mt-1">User: {user.email}</p>
+              {/* <p className="text-xs text-gray-500 mt-1">User: {user.email}</p> */}
             </div>
             <div className="text-right">
               <button
@@ -322,9 +322,9 @@ export default function RechargeBalancePage() {
           </div>
           <div className="bg-white rounded-xl p-4 border border-blue-100">
             <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg mr-3">
+              {/* <div className="p-2 bg-blue-100 rounded-lg mr-3">
                 <span className="text-blue-600 text-lg">Balance Scale</span>
-              </div>
+              </div> */}
               <div>
                 <p className="text-sm font-medium text-gray-600">Net Balance</p>
                 <p
