@@ -273,7 +273,7 @@ export default function RechargeBalancePage() {
                 <RefreshCw size={20} />
                 Refresh
               </button>
-              <div
+              {/* <div
                 className={`mt-1 px-3 py-1 text-center rounded-full text-xs font-semibold ${
                   walletBalance > 0
                     ? "bg-green-100 text-green-700"
@@ -281,7 +281,7 @@ export default function RechargeBalancePage() {
                 }`}
               >
                 {walletBalance > 0 ? "Active" : "Empty"}
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
