@@ -104,22 +104,8 @@ export function useAuth(redirectOnUnauth = true) {
       if (user) checkAuth();
     }, 5 * 60 * 1000);
 
-    // Auto-logout if session expires (token invalid or 401)
-    const autoLogoutInterval = setInterval(() => {
-      const expires = Number(localStorage.getItem("refreshExpires"));
-      if (expires && Date.now() > expires) {
-        setUser(null);
-        localStorage.removeItem("user");
-        localStorage.removeItem("refreshExpires");
-        router.push("/login?next=" + encodeURIComponent(window.location.pathname + window.location.search));
-      }
-    }, 60 * 1000); // check every 1 min
-
-    return () => {
-      clearInterval(interval);
-      clearInterval(autoLogoutInterval);
-    };
-  }, [checkAuth, user, router]);
+    return () => clearInterval(interval);
+  }, [checkAuth]); // no 'user' dependency!
 
   return {
     user,

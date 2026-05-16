@@ -696,6 +696,12 @@ const OnlyMyOrder = () => {
                 selectedFreightMode: selectedShippingOption.freight_mode,
                 paymentMethod: shippingPaymentMethod,
                 courier_code: selectedShippingOption.courier_code || "",
+                // Calculate COD amount: shipping charges + unit price + COD
+                codAmount: shippingPaymentMethod === "COD" 
+                  ? (Number(selectedShippingOption.total_Price_GST_Included) || 0) + calculateOrderValue(order)
+                  : 0,
+                // Use pickup address name instead of hardcoded "MS Fashion"
+                shippedBy: order.pickupAddressName || "MS Fashion",
               }),
             },
           );

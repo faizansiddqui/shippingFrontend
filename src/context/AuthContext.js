@@ -18,8 +18,8 @@ export function AuthProvider({ children }) {
 
   // Warning time before auto-logout (in ms)
   const WARNING_TIME = 60000; // 1 minute warning
-  // Session timeout (in ms) - match backend session expiry (15 minutes)
-  const SESSION_TIMEOUT = 15 * 60 * 1000; // 15 minutes
+  // Session timeout (in ms) - match backend session expiry
+  const SESSION_TIMEOUT = 24 * 60 * 60 * 1000; // 24 hours
 
   // ✅ Handle unauthenticated state
   const handleUnauth = useCallback((isSessionExpired = false) => {
@@ -212,8 +212,8 @@ export function AuthProvider({ children }) {
         return;
       }
 
-      // Check for inactivity timeout (match session timeout - 15 minutes)
-      const INACTIVITY_TIMEOUT = 15 * 60 * 1000; // 15 minutes
+      // Check for inactivity timeout (e.g., 30 minutes of inactivity)
+      const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes
       if (timeSinceActivity >= INACTIVITY_TIMEOUT && !showLogoutWarning) {
         handleSessionExpiry();
       }
